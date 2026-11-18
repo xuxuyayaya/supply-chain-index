@@ -16,7 +16,7 @@ npm start
 npm test
 ```
 
-打开 http://localhost:3000。后端负责案例查询、指数计算、贸易汇总和追溯图。案例数据在 `server/catalog.mjs`。
+打开 http://localhost:3000 查看门户首页，从「方案 · 产品 · 场景」进入指数分析。也可直接访问 http://localhost:3000/supply-index.html。后端负责案例查询、指数计算、贸易汇总和追溯图。案例数据在 `server/catalog.mjs`。
 
 ## 部署
 

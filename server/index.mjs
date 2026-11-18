@@ -5,6 +5,12 @@ import { listCases, getCase, getTrace } from './catalog.mjs';
 const files = new Map([
   ['/', ['index.html', 'text/html;charset=utf-8']],
   ['/index.html', ['index.html', 'text/html;charset=utf-8']],
+  ['/supply-index.html', ['supply-index.html', 'text/html;charset=utf-8']],
+  ['/portal.css', ['portal.css', 'text/css;charset=utf-8']],
+  ['/portal.js', ['portal.js', 'text/javascript;charset=utf-8']],
+  ['/scene.css', ['scene.css', 'text/css;charset=utf-8']],
+  ['/regions.json', ['regions.json', 'application/json;charset=utf-8']],
+  ['/logistics-hero.webp', ['logistics-hero.webp', 'image/webp']],
   ['/style.css', ['style.css', 'text/css;charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
 ]);

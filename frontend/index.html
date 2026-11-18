@@ -2,82 +2,59 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#102521">
-  <title>产业链供应分析指数</title>
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14191e">
+  <title>数字物流网络 · 平台总览</title>
+  <link rel="stylesheet" href="./portal.css">
+  <script type="module" src="./portal.js"></script>
 </head>
-<body>
-  <header class="site-header">
-    <div class="wrap header-row">
-      <a class="brand" href="./" aria-label="产业链观察首页"><span class="brand-mark" aria-hidden="true">↗</span> 产业链观察</a>
-      <nav aria-label="场景导航">
-        <a href="#overview">指数概览</a><a href="#trade">贸易结构</a><a href="#trace">供应追溯</a>
-      </nav>
+<body class="portal">
+  <header class="portal-header">
+    <div class="shell masthead">
+      <a class="portal-brand" href="./" aria-label="数字物流网络首页"><span class="brand-symbol" aria-hidden="true"></span>数字物流网络</a>
+      <nav aria-label="主导航"><a href="#network">平台总览</a><a href="#catalog">方案 · 产品 · 场景</a><a href="#architecture">三层网络</a></nav>
+      <label class="region-select"><span>区域</span><select id="region" aria-label="区域"><option value="all">全国</option><option value="Henan">河南</option><option value="Jiangxi">江西</option><option value="Zhejiang">浙江</option></select></label>
     </div>
   </header>
+
   <main>
-    <section class="hero" aria-labelledby="title">
-      <div class="wrap hero-grid">
-        <div>
-          <p class="eyebrow">产业链数据分析</p>
-          <h1 id="title">产业链供应分析指数</h1>
-          <p class="hero-copy">查看关键环节覆盖、本地配套与供应依赖，沿核心部件追溯上下游供货关系。</p>
-          <a href="#trace" class="hero-link">探索供应链 <span aria-hidden="true">↘</span></a>
+    <section class="portal-hero" aria-labelledby="hero-title">
+      <div class="shell hero-inner">
+        <div class="hero-message" aria-live="polite">
+          <p class="hero-label" id="hero-label">数字物流网络</p>
+          <h1 id="hero-title">让货流、通道与产业协同</h1>
+          <p id="hero-copy">从全国网络到区域节点，以通道组织、平台协同和产业分析支撑物流决策。</p>
         </div>
-        <div class="hero-visual" aria-hidden="true">
-          <div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div>
-          <div class="orbit orbit-diagonal"></div><div class="hero-core"></div>
-          <i></i><i></i><i></i><i></i>
-        </div>
+        <button class="hero-prev" type="button" aria-label="上一张">‹</button>
+        <button class="hero-next" type="button" aria-label="下一张">›</button>
+        <nav class="hero-switch" aria-label="首页轮播">
+          <button type="button" data-slide="0" aria-pressed="true"><strong>方案</strong><span>区域物流网络建设</span></button>
+          <button type="button" data-slide="1" aria-pressed="false"><strong>产品</strong><span>平台能力与数据应用</span></button>
+          <button type="button" data-slide="2" aria-pressed="false"><strong>场景</strong><span>通道、枢纽与产业链</span></button>
+        </nav>
       </div>
     </section>
-    <div class="wrap main-content">
-      <section id="overview" aria-labelledby="overview-title">
-        <div class="section-top">
-          <div><p class="kicker">指数概览</p><h2 id="overview-title">供应能力评估</h2></div>
-          <div class="filters">
-            <label>产业链案例<select id="case"></select></label>
-            <label>统计期<select id="period"></select></label>
-          </div>
+
+    <section class="shell network" id="network" aria-labelledby="network-title">
+      <div class="section-head"><div><p class="overline">平台总览</p><h2 id="network-title">全国物流网络</h2></div><span class="subtle">示意视图</span></div>
+      <div class="network-stage" id="architecture">
+        <div class="network-info"><h3 id="layer-title">交通基础设施网</h3><p id="layer-copy">按省域观察物流节点与跨区域联系。</p><p id="region-note" class="subtle" aria-live="polite">当前范围：全国</p></div>
+        <canvas id="network-map" role="img" aria-label="交通基础设施、物流通道与数字平台三层网络示意图"></canvas>
+        <div class="map-tools" aria-label="地图视图操作"><button type="button" id="zoom-in" aria-label="放大">+</button><button type="button" id="zoom-out" aria-label="缩小">−</button><button type="button" id="reset-map">重置</button></div>
+        <div class="layer-tabs" aria-label="网络图层"><button type="button" data-layer="0" aria-pressed="true">交通基础设施网</button><button type="button" data-layer="1" aria-pressed="false">物流通道网</button><button type="button" data-layer="2" aria-pressed="false">数字物流网</button></div>
+      </div>
+      <p class="map-caption">图中连线和高亮为演示。行政边界底图来源 <a href="https://www.geoboundaries.org/" rel="noopener" target="_blank">geoBoundaries（CC BY 4.0）</a>。</p>
+    </section>
+
+    <section class="catalog" id="catalog" aria-labelledby="catalog-title">
+      <div class="shell">
+        <div class="section-head"><div><p class="overline">能力与应用</p><h2 id="catalog-title">方案 · 产品 · 场景</h2></div>
+          <div class="catalog-tabs" aria-label="目录分类"><button type="button" data-catalog="plans" aria-pressed="false">方案</button><button type="button" data-catalog="products" aria-pressed="false">产品</button><button type="button" data-catalog="scenarios" aria-pressed="true">场景</button></div>
         </div>
-        <div id="overview-content" class="loading" aria-live="polite">正在读取演示案例…</div>
-      </section>
-      <section id="trade" aria-labelledby="trade-title">
-        <div class="section-top">
-          <div><p class="kicker">贸易结构</p><h2 id="trade-title">供给规模与构成</h2></div>
-        </div>
-        <div id="trade-content"></div>
-      </section>
-      <section id="trace" aria-labelledby="trace-title">
-        <div class="section-top">
-          <div><p class="kicker">供应追溯</p><h2 id="trace-title">上游供货路径</h2></div>
-          <span class="label">关系示意图</span>
-        </div>
-        <div class="panel trace-panel">
-          <div class="trace-toolbar">
-            <label>部件品类<select id="part"></select></label>
-            <label>供应层级<select id="tier"><option value="">全部层级</option><option value="3">Tier 3</option><option value="2">Tier 2</option><option value="1">Tier 1</option><option value="0">整机端</option></select></label>
-            <label>查找企业<input id="search" type="search" placeholder="搜索企业或地区"></label>
-            <button id="reset" class="quiet" type="button">重置视图</button>
-          </div>
-          <p id="trace-status" aria-live="polite"></p>
-          <div class="trace-layout">
-            <div id="graph" class="graph" aria-label="供货路径图"></div>
-            <aside id="node-detail" class="node-detail" aria-label="节点详情"></aside>
-          </div>
-          <p class="trace-legend"><span>→ 演示供货路径</span><span>┈ 未核实的关联示意</span><span>节点位置为业务层级布局</span></p>
-        </div>
-      </section>
-      <section class="panel notes" id="method" aria-labelledby="method-title">
-        <h2 id="method-title">数据与口径</h2>
-        <p>四项指标分别按 30%、30%、20%、20% 加权。正向指标取原值百分数，逆向指标用 100 减去原值百分数。</p>
-        <p>所有案例均为演示。海川与临汐为虚构地区。开封是参考案例，统计示例和关系示意不可作为正式统计或企业订单依据。正式发布前须确认样本及龙头依赖度口径。</p>
-        <p id="data-channel"></p>
-      </section>
-    </div>
+        <div id="catalog-content" class="catalog-grid" aria-live="polite"></div>
+      </div>
+    </section>
   </main>
-  <footer class="wrap footer"><span>产业链观察 · 供应分析</span><a href="https://github.com/xuxuyayaya/supply-chain-index">项目源码与 PRD ↗</a></footer>
+  <footer class="portal-footer"><div class="shell footer-row"><strong>数字物流网络</strong><span>平台与案例演示</span><a href="https://github.com/xuxuyayaya/supply-chain-index">源码与 PRD ↗</a></div></footer>
 </body>
 </html>

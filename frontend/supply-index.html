@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#14191e">
+  <title>产业链供应分析指数</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./scene.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body class="scene">
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="./" aria-label="数字物流网络首页"><span class="brand-mark" aria-hidden="true"></span>数字物流网络</a>
+      <nav aria-label="场景导航">
+        <a href="./#catalog">全部场景</a><a href="#overview">指数概览</a><a href="#trade">贸易结构</a><a href="#trace">供应追溯</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <section class="scene-heading" aria-labelledby="title">
+      <div class="wrap">
+        <nav class="breadcrumb" aria-label="面包屑"><a href="./">平台首页</a><span aria-hidden="true">/</span><a href="./#catalog">场景</a><span aria-hidden="true">/</span><span aria-current="page">供应分析</span></nav>
+        <h1 id="title">产业链供应分析指数</h1>
+        <p>看供应能力、贸易结构与上游供货关系。</p>
+      </div>
+    </section>
+    <div class="wrap main-content">
+      <section id="overview" aria-labelledby="overview-title">
+        <div class="section-top">
+          <div><h2 id="overview-title">指数概览</h2></div>
+          <div class="filters">
+            <label>产业链案例<select id="case"></select></label>
+            <label>统计期<select id="period"></select></label>
+          </div>
+        </div>
+        <div id="overview-content" class="loading" aria-live="polite">正在读取演示案例…</div>
+      </section>
+      <section id="trade" aria-labelledby="trade-title">
+        <div class="section-top">
+          <div><h2 id="trade-title">贸易结构</h2></div>
+        </div>
+        <div id="trade-content"></div>
+      </section>
+      <section id="trace" aria-labelledby="trace-title">
+        <div class="section-top">
+          <div><h2 id="trace-title">供应追溯</h2></div>
+          <span class="label">关系示意图</span>
+        </div>
+        <div class="panel trace-panel">
+          <div class="trace-toolbar">
+            <label>部件品类<select id="part"></select></label>
+            <label>供应层级<select id="tier"><option value="">全部层级</option><option value="3">Tier 3</option><option value="2">Tier 2</option><option value="1">Tier 1</option><option value="0">整机端</option></select></label>
+            <label>查找企业<input id="search" type="search" placeholder="搜索企业或地区"></label>
+            <button id="reset" class="quiet" type="button">重置视图</button>
+          </div>
+          <p id="trace-status" aria-live="polite"></p>
+          <div class="trace-layout">
+            <div id="graph" class="graph" aria-label="供货路径图"></div>
+            <aside id="node-detail" class="node-detail" aria-label="节点详情"></aside>
+          </div>
+          <p class="trace-legend"><span>→ 演示供货路径</span><span>┈ 未核实的关联示意</span><span>节点位置为业务层级布局</span></p>
+        </div>
+      </section>
+      <details class="notes" id="method">
+        <summary>数据与口径</summary>
+        <p>四项指标分别按 30%、30%、20%、20% 加权。正向指标取原值百分数，逆向指标用 100 减去原值百分数。</p>
+        <p>所有案例均为演示。海川与临汐为虚构地区。开封是参考案例，统计示例和关系示意不可作为正式统计或企业订单依据。正式发布前须确认样本及龙头依赖度口径。</p>
+        <p id="data-channel"></p>
+      </details>
+    </div>
+  </main>
+  <footer class="wrap footer"><span>数字物流网络 · 供应分析</span><a href="https://github.com/xuxuyayaya/supply-chain-index">项目源码与 PRD ↗</a></footer>
+</body>
+</html>
