@@ -1,0 +1,12 @@
+{
+  "name": "supply-chain-index",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "test": "node --test",
+    "snapshot": "node scripts/snapshot.mjs"
+  }
+}
