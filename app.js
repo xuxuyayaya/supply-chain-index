@@ -313,7 +313,8 @@ async function init() {
   try {
     const result = await request('cases', 'cases', new AbortController().signal);
     state.catalog = result.data;
-    options(view.case, state.catalog.map(item => [item.id, item.name]));
+    const initialCase = new URLSearchParams(location.search).get('case');
+    options(view.case, state.catalog.map(item => [item.id, item.name]), initialCase);
     configurePeriods();
   } catch {
     errorBox(view['overview-content'], '案例列表加载失败。', init);
