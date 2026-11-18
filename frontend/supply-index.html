@@ -14,7 +14,7 @@
     <div class="wrap header-row">
       <a class="brand" href="./" aria-label="数字物流网络首页"><span class="brand-mark" aria-hidden="true"></span>数字物流网络</a>
       <nav aria-label="场景导航">
-        <a href="./#catalog">全部场景</a><a href="#overview">指数概览</a><a href="#trade">贸易结构</a><a href="#trace">供应追溯</a>
+        <a href="./#catalog">全部场景</a><a href="#overview">指数概览</a><a href="#dimensions">指标拆解</a><a href="#trace">供应追溯</a>
       </nav>
     </div>
   </header>
@@ -29,7 +29,7 @@
     <div class="wrap main-content">
       <section id="overview" aria-labelledby="overview-title">
         <div class="section-top">
-          <div><h2 id="overview-title">指数概览</h2></div>
+          <h2 id="overview-title">指数总览</h2>
           <div class="filters">
             <label>产业链案例<select id="case"></select></label>
             <label>统计期<select id="period"></select></label>
@@ -37,16 +37,20 @@
         </div>
         <div id="overview-content" class="loading" aria-live="polite">正在读取演示案例…</div>
       </section>
-      <section id="trade" aria-labelledby="trade-title">
+      <section id="dimensions" aria-labelledby="dimension-title">
+        <div class="section-top"><h2 id="dimension-title">指标拆解</h2></div>
+        <div id="dimension-nav" class="dimension-nav"></div>
+        <div id="dimension-detail" class="dimension-detail" hidden></div>
+      </section>
+      <section id="trade" aria-labelledby="trade-title" hidden>
         <div class="section-top">
           <div><h2 id="trade-title">贸易结构</h2></div>
         </div>
         <div id="trade-content"></div>
       </section>
-      <section id="trace" aria-labelledby="trace-title">
+      <section id="trace" aria-labelledby="trace-title" hidden>
         <div class="section-top">
-          <div><h2 id="trace-title">供应追溯</h2></div>
-          <span class="label">关系示意图</span>
+          <div><h2 id="trace-title">供应追溯</h2><p class="muted">环节覆盖率的证据视图 · 城市点位与供货关系为演示</p></div>
         </div>
         <div class="panel trace-panel">
           <div class="trace-toolbar">
@@ -57,10 +61,14 @@
           </div>
           <p id="trace-status" aria-live="polite"></p>
           <div class="trace-layout">
-            <div id="graph" class="graph" aria-label="供货路径图"></div>
+            <div class="trace-view">
+              <div id="map-status" class="map-status" aria-live="polite"></div>
+              <div id="trace-map" class="trace-map" aria-label="供应商城市地图" hidden></div>
+              <div id="graph" class="graph" aria-label="供货路径图"></div>
+            </div>
             <aside id="node-detail" class="node-detail" aria-label="节点详情"></aside>
           </div>
-          <p class="trace-legend"><span>→ 演示供货路径</span><span>┈ 未核实的关联示意</span><span>节点位置为业务层级布局</span></p>
+          <p class="trace-legend"><span>→ 演示供货路径</span><span>┈ 未核实的关联示意</span><span>连线表示供货关系，非实际运输路线</span></p>
         </div>
       </section>
       <details class="notes" id="method">

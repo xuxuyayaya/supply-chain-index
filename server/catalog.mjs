@@ -99,6 +99,22 @@ export function getCase(id, period) {
   };
 }
 
+
+// City-center GCJ-02 demonstration coordinates. No supplier facility is implied.
+const traceLocations = {
+  'advanced-manufacturing': [['苏州',120.59,31.30],['无锡',120.31,31.49],['常州',119.97,31.81],['南京',118.80,32.06],['杭州',120.15,30.28]],
+  'energy-equipment': [['宜春',114.39,27.80],['吉安',114.99,27.11],['新余',114.92,27.82],['南昌',115.86,28.68],['赣州',114.93,25.83]],
+  'kaifeng-auto': [['武汉',114.31,30.59],['芜湖',118.38,31.33],['郑州',113.63,34.75],['开封',114.31,34.80],['合肥',117.23,31.82]]
+};
+
+export function getIndex(id, period, partId) {
+  const record = getCase(id, period);
+  if (!record) return null;
+  const part = partId ?? record.traceParts[0]?.id;
+  const trace = part ? getTrace(id, part) : null;
+  return part && !trace ? null : { ...record, trace };
+}
+
 export function getTrace(id, partId) {
   const entry = cases.find(item => item.id === id);
   const part = entry?.parts.find(([key]) => key === partId && !['steel', 'other'].includes(key));
@@ -108,6 +124,10 @@ export function getTrace(id, partId) {
     tier: 3 - i, place: ['上游材料区', '组件制造区', '区域配套区', entry.region][i]
   }));
   nodes.push({ id: 'tier-1b', label: part[1] + ' · 备选组件厂', tier: 2, place: '跨区配套区' });
+  nodes.forEach((node, i) => {
+    const [city, lng, lat] = traceLocations[id][i];
+    Object.assign(node, { city, position: [lng, lat] });
+  });
   const edges = [
     ...nodes.slice(0, 3).map((node, i) => ({ from: node.id, to: nodes[i + 1].id, status: 'demo' })),
     { from: 'tier-1b', to: 'tier-2', status: 'association' }

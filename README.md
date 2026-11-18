@@ -25,3 +25,9 @@ npm test
 Render 使用 Node.js 运行时，构建命令 `npm test`，启动命令 `npm start`。后端监听 `PORT`。健康端点为 `/api/health`。前端部署域名或 API 域名变化时，同步更新服务端 CORS 以及 `frontend/app.js` 的 API 地址。
 
 所有案例为演示。网页中的企业关系是业务层级示意。
+
+## 指数接口与高德地图
+
+- `GET /api/index?case=kaifeng-auto&period=2026-10` 返回总分、四项指标、贸易结构与默认部件的追溯数据。可带 `part` 查询指定部件。
+- 点击「环节覆盖」展开供应追溯。地图标注城市级演示点，连线表示供应关系。
+- 在 Render 服务环境中设置 `AMAP_WEB_KEY`、`AMAP_SECURITY_CODE`，并在高德控制台允许 `xuxuyayaya.github.io` 和该服务的 Render 域名。安全密钥仅由服务端地图代理使用。配置前，页面提供城市分布示意和高德城市跳转。

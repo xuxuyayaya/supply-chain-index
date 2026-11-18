@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { listCases, getCase, getTrace } from './catalog.mjs';
+import { listCases, getCase, getIndex, getTrace } from './catalog.mjs';
 
 const files = new Map([
   ['/', ['index.html', 'text/html;charset=utf-8']],
@@ -12,6 +12,7 @@ const files = new Map([
   ['/regions.json', ['regions.json', 'application/json;charset=utf-8']],
   ['/logistics-hero.webp', ['logistics-hero.webp', 'image/webp']],
   ['/style.css', ['style.css', 'text/css;charset=utf-8']],
+  ['/trace-map.js', ['trace-map.js', 'text/javascript;charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
 ]);
 
@@ -34,6 +35,32 @@ export const server = createServer(async (req, res) => {
   try {
     const query = new URLSearchParams(req.url?.split('?')[1]);
     if (pathname === '/api/health') return send(200, { status: 'ok' });
+    if (pathname === '/api/map-config') {
+      // The JS key is public. Its security code stays on the proxy.
+      const key = process.env.AMAP_WEB_KEY;
+      const configured = Boolean(key && process.env.AMAP_SECURITY_CODE);
+      return send(200, configured ? { key, servicePath: '/_AMapService' } : { key: null });
+    }
+    if (pathname === '/api/index') {
+      const value = getIndex(query.get('case'), query.get('period'), query.get('part'));
+      return value ? send(200, value) : send(404, { error: '案例、期次或部件不存在' });
+    }
+    if (pathname.startsWith('/_AMapService/')) {
+      const securityCode = process.env.AMAP_SECURITY_CODE;
+      if (!securityCode || !process.env.AMAP_WEB_KEY) return send(503, { error: '地图尚未配置' });
+      const path = pathname.slice('/_AMapService'.length);
+      if (path !== '/v3/vst' && path !== '/v4/map/styles') {
+        return send(404, { error: '地图服务不存在' });
+      }
+      const host = path === '/v4/map/styles' ? 'webapi.amap.com' : 'restapi.amap.com';
+      const target = new URL('https://' + host + path);
+      target.search = query.toString();
+      target.searchParams.set('key', process.env.AMAP_WEB_KEY);
+      target.searchParams.set('jscode', securityCode);
+      const result = await fetch(target, { signal: AbortSignal.timeout(6500), redirect: 'error' });
+      res.writeHead(result.status, { 'Content-Type': result.headers.get('content-type') || 'application/json' });
+      return res.end(Buffer.from(await result.arrayBuffer()));
+    }
     if (pathname === '/api/cases') return send(200, listCases());
     const route = /^\/api\/cases\/([a-z0-9-]+)(?:\/trace)?$/.exec(pathname);
     if (route) {

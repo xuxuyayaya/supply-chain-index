@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { listCases, getCase, getTrace } from './catalog.mjs';
+import { listCases, getCase, getIndex, getTrace } from './catalog.mjs';
 
 test('Kaifeng reference example reproduces the published demonstration', () => {
   const demo = getCase('kaifeng-auto');
@@ -32,4 +32,14 @@ test('unknown case, period and part remain distinguishable from valid data', () 
   assert.equal(getCase('unknown'), null);
   assert.equal(getCase('kaifeng-auto', '2025-01'), null);
   assert.equal(getTrace('kaifeng-auto', 'steel'), null);
+});
+
+
+test('index assembles the score, trade and selected trace in one response', () => {
+  const record = getIndex('kaifeng-auto', '2026-10', 'seat');
+  assert.equal(record.index.toFixed(1), '78.5');
+  assert.equal(record.trade.total, 23);
+  assert.equal(record.trace.partId, 'seat');
+  assert.ok(record.trace.nodes.every(node => node.city && node.position.every(Number.isFinite)));
+  assert.equal(getIndex('kaifeng-auto', '2026-10', 'steel'), null);
 });
