@@ -12,7 +12,7 @@
 <body class="scene">
   <header class="site-header">
     <div class="wrap header-row">
-      <a class="brand" href="./" aria-label="数字物流网络首页"><span class="brand-mark" aria-hidden="true"></span>数字物流网络</a>
+      <a class="brand" href="./" aria-label="全国物流网首页"><span class="brand-mark" aria-hidden="true"></span><span>数联科技<small>Unidata Tech</small></span></a>
       <nav aria-label="场景导航">
         <a href="./#catalog">全部场景</a><a href="#overview">指数概览</a><a href="#dimensions">指标拆解</a><a href="#trace">供应追溯</a>
       </nav>
@@ -23,7 +23,7 @@
       <div class="wrap">
         <nav class="breadcrumb" aria-label="面包屑"><a href="./">平台首页</a><span aria-hidden="true">/</span><a href="./#catalog">场景</a><span aria-hidden="true">/</span><span aria-current="page">供应分析</span></nav>
         <h1 id="title">产业链供应分析指数</h1>
-        <p>看供应能力、贸易结构与上游供货关系。</p>
+        <p>按城市和月份评价产业链供应能力，从分项得分追到采购记录与上游配套。</p>
       </div>
     </section>
     <div class="wrap main-content">
@@ -31,11 +31,11 @@
         <div class="section-top">
           <h2 id="overview-title">指数总览</h2>
           <div class="filters">
-            <label>产业链案例<select id="case"></select></label>
+            <label>城市与产业链<select id="case"></select></label>
             <label>统计期<select id="period"></select></label>
           </div>
         </div>
-        <div id="overview-content" class="loading" aria-live="polite">正在读取演示案例…</div>
+        <div id="overview-content" class="loading" aria-live="polite">正在读取城市评价…</div>
       </section>
       <section id="dimensions" aria-labelledby="dimension-title">
         <div class="section-top"><h2 id="dimension-title">指标拆解</h2></div>
@@ -50,7 +50,7 @@
       </section>
       <section id="trace" aria-labelledby="trace-title" hidden>
         <div class="section-top">
-          <div><h2 id="trace-title">供应追溯</h2><p class="muted">环节覆盖率的证据视图 · 城市点位与供货关系为演示</p></div>
+          <div><h2 id="trace-title">供应追溯</h2><p class="muted">按部件查看配套企业、供货方向与披露依据。点位按城市归集。</p></div>
         </div>
         <div class="panel trace-panel">
           <div class="trace-toolbar">
@@ -63,22 +63,28 @@
           <div class="trace-layout">
             <div class="trace-view">
               <div id="map-status" class="map-status" aria-live="polite"></div>
-              <div id="trace-map" class="trace-map" aria-label="供应商城市地图" hidden></div>
+              <div class="map-frame"><div id="map-controls" role="group" aria-label="追溯地图缩放" hidden>
+                <button type="button" id="trace-zoom-in" aria-label="放大追溯地图">＋</button><button type="button" id="trace-zoom-out" aria-label="缩小追溯地图">−</button><button type="button" id="trace-fit">全览</button><output id="map-zoom" aria-label="当前缩放"></output>
+              </div><div id="trace-map" class="trace-map" aria-label="供应商城市地图" hidden></div></div>
               <div id="graph" class="graph" aria-label="供货路径图"></div>
             </div>
             <aside id="node-detail" class="node-detail" aria-label="节点详情"></aside>
           </div>
-          <p class="trace-legend"><span>→ 演示供货路径</span><span>┈ 未核实的关联示意</span><span>连线表示供货关系，非实际运输路线</span></p>
+          <p class="trace-legend"><span>→ 供货路径</span><span>┈ 集团、车型或框架关联</span><span>箭头由供应方指向采购方</span></p>
         </div>
+      </section>
+      <section id="system" aria-labelledby="system-title">
+        <div class="section-top"><h2 id="system-title">产业链综合研判</h2></div>
+        <div id="system-content"></div>
       </section>
       <details class="notes" id="method">
         <summary>数据与口径</summary>
         <p>四项指标分别按 30%、30%、20%、20% 加权。正向指标取原值百分数，逆向指标用 100 减去原值百分数。</p>
-        <p>所有案例均为演示。海川与临汐为虚构地区。开封是参考案例，统计示例和关系示意不可作为正式统计或企业订单依据。正式发布前须确认样本及龙头依赖度口径。</p>
+        <p>城市评分、购销额和同业基准采用情景测算。开封企业关系按各品类列出的公开材料归集；集团采购、合作框架与车型适配沿用各自披露口径。</p>
         <p id="data-channel"></p>
       </details>
     </div>
   </main>
-  <footer class="wrap footer"><span>数字物流网络 · 供应分析</span><a href="https://github.com/xuxuyayaya/supply-chain-index">项目源码与 PRD ↗</a></footer>
+  <footer class="wrap footer"><span>全国物流网 · 供应分析</span><a href="./PRD.docx" download>下载产品需求文档（Word）</a></footer>
 </body>
 </html>
