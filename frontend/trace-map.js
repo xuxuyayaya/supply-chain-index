@@ -63,8 +63,11 @@ async function getSdk(api) {
   return sdk;
 }
 
-function markerLabel(node, count) {
-  const content = document.createElement('span');
+function markerLabel(node, count, next) {
+  const content = document.createElement('button');
+  content.type = 'button';
+  content.dataset.node = next;
+  content.setAttribute('aria-label', '查看' + node.city + '供应节点');
   content.className = 'amap-trace-pin';
   content.style.background = tierColors[node.tier];
   content.textContent = node.city + ' · ' + (count > 1 ? count + ' 个节点' : node.tier ? 'T' + node.tier : '整机');
@@ -138,16 +141,16 @@ export async function renderTraceMap({ api, container, status, graph, nodes, edg
       }));
     const markers = cities(indexed.values(), selected).map(({node, next, count}) => {
       const marker = new AMap.Marker({
-        position: node.position, content: markerLabel(node, count),
+        position: node.position, content: markerLabel(node, count, next),
         anchor: 'center', zIndex: node.id === selected ? 120 : 100
       });
-      marker.on('click', () => onSelect(next));
       return marker;
     });
     mapOverlays = [...lines, ...markers];
     map.add(mapOverlays);
     const fit = () => map.setFitView(mapOverlays, true, [48,60,48,60], 10);
     controls = { fit, zoom: steps => map.setZoom(Math.max(3, Math.min(18, map.getZoom()+steps)), true) };
+    bindMapInteractions(container, onSelect);
     toolbar.hidden = false;
     if (changed || !container.dataset.loaded) fit();
     container.dataset.loaded = 'yes';
@@ -238,6 +241,42 @@ async function drawCityOverview(container, nodes, edges, selected, onSelect, cur
   zoomOutput.value = Math.round(fallback.zoom*100) + '%';
   container.replaceChildren(canvas, ...labels);
   return true;
+}
+
+function bindMapInteractions(container, onSelect) {
+  gestures?.abort();
+  gestures = new AbortController();
+  const frame = container.parentElement;
+  const options = { signal: gestures.signal, capture: true };
+  let pressed;
+  let wheelDelta = 0;
+  const pin = e => e.target.closest?.('.amap-trace-pin');
+  frame.addEventListener('pointerdown', e => {
+    const target = pin(e);
+    pressed = target ? { id:target.dataset.node, x:e.clientX, y:e.clientY } : null;
+  }, options);
+  frame.addEventListener('pointerup', e => {
+    if (pressed && pin(e)?.dataset.node === pressed.id && Math.hypot(e.clientX-pressed.x,e.clientY-pressed.y)<7) {
+      const id = pressed.id;
+      pressed = null;
+      onSelect(id);
+    }
+  }, options);
+  frame.addEventListener('click', e => {
+    const target = pin(e);
+    if (target && e.detail===0) onSelect(target.dataset.node);
+  }, options);
+  frame.addEventListener('wheel', e => {
+    if (!container.contains(e.target) || !e.deltaY) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const delta = e.deltaY * (e.deltaMode===1 ? 16 : e.deltaMode===2 ? container.clientHeight : 1);
+    wheelDelta = Math.sign(delta) === Math.sign(wheelDelta) ? wheelDelta + delta : delta;
+    if (Math.abs(wheelDelta) >= 35) {
+      controls.zoom(-Math.sign(wheelDelta));
+      wheelDelta = 0;
+    }
+  }, { ...options, passive:false });
 }
 
 function bindFallback(container, draw) {
