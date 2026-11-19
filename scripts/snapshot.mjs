@@ -10,6 +10,7 @@ for (const entry of listCases()) {
     const detail = getIndex(entry.id, period);
     await write(entry.id + '-' + period, detail);
   }
+  if (entry.id === 'kaifeng-auto') await write(entry.id + '-all', getTrace(entry.id, 'all'));
   for (const part of getCase(entry.id).traceParts) {
     await write(entry.id + '-' + part.id, getTrace(entry.id, part.id));
   }

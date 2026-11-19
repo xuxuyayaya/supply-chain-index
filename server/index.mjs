@@ -13,6 +13,7 @@ const files = new Map([
   ['/logistics-hero.webp', ['logistics-hero.webp', 'image/webp']],
   ['/style.css', ['style.css', 'text/css;charset=utf-8']],
   ['/trace-map.js', ['trace-map.js', 'text/javascript;charset=utf-8']],
+  ['/PRD.docx', ['../docs/PRD.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']],
   ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
 ]);
 

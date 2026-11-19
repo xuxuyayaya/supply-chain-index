@@ -3,6 +3,29 @@ let map;
 let mapOverlays = [];
 let revision = 0;
 let outlines;
+let extentId;
+let controls;
+let gestures;
+const toolbar = document.getElementById('map-controls');
+const zoomOutput = document.getElementById('map-zoom');
+const fallback = { zoom: 1, x: 0, y: 0 };
+function resetFallback() { Object.assign(fallback, { zoom: 1, x: 0, y: 0 }); }
+export function fitTraceMap() { controls?.fit(); }
+document.getElementById('trace-zoom-in').onclick = () => controls?.zoom(1);
+document.getElementById('trace-zoom-out').onclick = () => controls?.zoom(-1);
+document.getElementById('trace-fit').onclick = fitTraceMap;
+function cities(nodes, selected) {
+  const grouped = new Map();
+  for (const node of nodes) {
+    const key = node.position.join(',');
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(node);
+  }
+  return Array.from(grouped.values(), items => {
+    const index = items.findIndex(node => node.id === selected);
+    return { node: items[Math.max(0,index)], next: items[(index+1)%items.length].id, count: items.length };
+  });
+}
 let mapOpening;
 const tierColors = ['#222a35', '#a32a3b', '#b47831', '#527064'];
 
@@ -40,16 +63,20 @@ async function getSdk(api) {
   return sdk;
 }
 
-function markerLabel(node) {
+function markerLabel(node, count) {
   const content = document.createElement('span');
   content.className = 'amap-trace-pin';
   content.style.background = tierColors[node.tier];
-  content.textContent = node.city + ' · ' + (node.tier ? 'T' + node.tier : '整机');
+  content.textContent = node.city + ' · ' + (count > 1 ? count + ' 个节点' : node.tier ? 'T' + node.tier : '整机');
   return content;
 }
 
 export function clearTraceMap(container) {
   revision++;
+  gestures?.abort();
+  extentId = undefined;
+  controls = null; toolbar.hidden = true;
+  resetFallback();
   if (map && mapOverlays.length) map.remove(mapOverlays);
   mapOverlays = [];
   container.hidden = true;
@@ -58,10 +85,15 @@ export function clearTraceMap(container) {
 
 export async function renderTraceMap({ api, container, status, graph, nodes, edges, selected, onSelect }) {
   const current = ++revision;
-  if (!nodes.length) {
+  const key = JSON.stringify(nodes.filter(n => n.position).map(n => [n.id,n.position]));
+  const changed = key !== extentId;
+  if (changed) resetFallback();
+  extentId = key;
+  if (!nodes.length || !nodes.some(node => node.position)) {
+    gestures?.abort(); controls = null; toolbar.hidden = true;
     container.hidden = true;
     graph.hidden = false;
-    status.textContent = '';
+    status.textContent = nodes.length ? '当前筛选范围内的企业未披露城市点位。' : '';
     if (map && mapOverlays.length) map.remove(mapOverlays);
     mapOverlays = [];
     return;
@@ -77,7 +109,7 @@ export async function renderTraceMap({ api, container, status, graph, nodes, edg
       container.replaceChildren();
       const initialMap = new AMap.Map(container, {
         center: indexed.values().next().value.position, zoom: 6, viewMode: '2D',
-        mapStyle: 'amap://styles/whitesmoke', scrollWheel: false
+        mapStyle: 'amap://styles/whitesmoke', scrollWheel: true, zoomEnable: true, touchZoom: true, dragEnable: true, zooms: [3,18]
       });
       mapOpening = new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('高德底图加载超时')), 8000);
@@ -85,6 +117,7 @@ export async function renderTraceMap({ api, container, status, graph, nodes, edg
         initialMap.on('error', () => { clearTimeout(timer); reject(new Error('高德地图服务返回错误')); });
       }).then(() => {
         map = initialMap;
+        map.on('zoomchange', () => { zoomOutput.value = Number(map.getZoom()).toFixed(1) + ' 级'; });
       }).catch(error => {
         initialMap.destroy();
         throw error;
@@ -103,29 +136,39 @@ export async function renderTraceMap({ api, container, status, graph, nodes, edg
         strokeOpacity: selected && ![edge.from, edge.to].includes(selected) ? .35 : .88,
         strokeStyle: edge.status === 'association' ? 'dashed' : 'solid', showDir: true
       }));
-    const markers = Array.from(indexed.values(), node => {
+    const markers = cities(indexed.values(), selected).map(({node, next, count}) => {
       const marker = new AMap.Marker({
-        position: node.position, content: markerLabel(node),
+        position: node.position, content: markerLabel(node, count),
         anchor: 'center', zIndex: node.id === selected ? 120 : 100
       });
-      marker.on('click', () => onSelect(node.id));
+      marker.on('click', () => onSelect(next));
       return marker;
     });
     mapOverlays = [...lines, ...markers];
     map.add(mapOverlays);
-    if (!selected) map.setFitView(mapOverlays, false, [45,55,45,55], 10);
+    const fit = () => map.setFitView(mapOverlays, true, [48,60,48,60], 10);
+    controls = { fit, zoom: steps => map.setZoom(Math.max(3, Math.min(18, map.getZoom()+steps)), true) };
+    toolbar.hidden = false;
+    if (changed || !container.dataset.loaded) fit();
+    container.dataset.loaded = 'yes';
+    zoomOutput.value = Number(map.getZoom()).toFixed(1) + ' 级';
     graph.hidden = false;
     graph.classList.add('map-index');
-    status.textContent = '高德底图 · 城市点位与供货关系示意。';
+    status.textContent = '高德底图 · 滚轮或双指缩放，拖动平移。同城多个节点可连续点选。';
   } catch (error) {
     if (current !== revision) return;
     graph.hidden = false;
     status.textContent = error.message + '。可从节点详情在高德查看城市。';
-    const drawn = await drawCityOverview(container, nodes, edges, selected, onSelect, current);
+    const draw = () => drawCityOverview(container, nodes, edges, selected, onSelect, current);
+    const drawn = await draw();
     if (current !== revision) return;
     container.hidden = !drawn;
     graph.classList.toggle('map-index', drawn);
-    if (drawn) status.textContent += ' 当前为城市分布示意。';
+    toolbar.hidden = !drawn;
+    if (drawn) {
+      status.textContent = '城市分布底图 · 可缩放、平移和点选企业。';
+      bindFallback(container, draw);
+    }
   }
 }
 
@@ -141,9 +184,9 @@ async function drawCityOverview(container, nodes, edges, selected, onSelect, cur
   const xs = located.map(node => node.position[0]);
   const ys = located.map(node => node.position[1]);
   const midpoint = [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
-  const scale = Math.min((width - 90) / Math.max(2, Math.max(...xs) - Math.min(...xs)),
+  const scale = fallback.zoom * Math.min((width - 90) / Math.max(2, Math.max(...xs) - Math.min(...xs)),
     (height - 78) / Math.max(2, Math.max(...ys) - Math.min(...ys)));
-  const project = ([lng, lat]) => [(lng-midpoint[0])*scale+width/2, (midpoint[1]-lat)*scale+height/2];
+  const project = ([lng, lat]) => [(lng-midpoint[0])*scale+width/2+fallback.x, (midpoint[1]-lat)*scale+height/2+fallback.y];
   const canvas = document.createElement('canvas');
   const ratio = window.devicePixelRatio || 1;
   canvas.width = width * ratio;
@@ -178,7 +221,7 @@ async function drawCityOverview(container, nodes, edges, selected, onSelect, cur
     ctx.lineTo(...to);
     ctx.stroke();
   }
-  const labels = located.map(node => {
+  const labels = cities(located, selected).map(({node, next, count}) => {
     const marker = document.createElement('button');
     marker.type = 'button';
     marker.className = 'city-map-pin';
@@ -186,12 +229,57 @@ async function drawCityOverview(container, nodes, edges, selected, onSelect, cur
     const [x,y] = points.get(node.id);
     marker.style.left = (x/width*100) + '%';
     marker.style.top = (y/height*100) + '%';
-    marker.textContent = node.city;
+    marker.textContent = node.city + (count > 1 ? ' · ' + count : '');
     marker.setAttribute('aria-label', node.city + ' · ' + node.label);
     marker.setAttribute('aria-pressed', String(node.id === selected));
-    marker.addEventListener('click', () => onSelect(node.id));
+    marker.addEventListener('click', () => onSelect(next));
     return marker;
   });
+  zoomOutput.value = Math.round(fallback.zoom*100) + '%';
   container.replaceChildren(canvas, ...labels);
   return true;
+}
+
+function bindFallback(container, draw) {
+  gestures?.abort();
+  gestures = new AbortController();
+  const signal = gestures.signal;
+  const pointers = new Map();
+  const rescale = (factor, x=0, y=0) => {
+    const zoom = Math.max(.5, Math.min(12, fallback.zoom*factor));
+    const ratio = zoom/fallback.zoom;
+    fallback.x = x-(x-fallback.x)*ratio;
+    fallback.y = y-(y-fallback.y)*ratio;
+    fallback.zoom = zoom;
+    draw();
+  };
+  const relative = (x,y) => {
+    const r = container.getBoundingClientRect();
+    return [x-r.left-r.width/2,y-r.top-r.height/2];
+  };
+  controls = { zoom: steps => rescale(1.3 ** steps), fit: () => { resetFallback(); draw(); } };
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    rescale(e.deltaY<0 ? 1.15 : 1/1.15, ...relative(e.clientX,e.clientY));
+  }, { passive:false, signal });
+  container.addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    container.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId,[e.clientX,e.clientY]);
+  }, { signal });
+  container.addEventListener('pointermove', e => {
+    const prev=pointers.get(e.pointerId);
+    if (!prev) return;
+    pointers.set(e.pointerId,[e.clientX,e.clientY]);
+    if (pointers.size===1) {
+      fallback.x += e.clientX-prev[0]; fallback.y += e.clientY-prev[1]; draw();
+    } else if (pointers.size===2) {
+      const [,other]=Array.from(pointers).find(([id])=>id!==e.pointerId);
+      const before=Math.hypot(prev[0]-other[0],prev[1]-other[1]);
+      if (before>0) rescale(Math.hypot(e.clientX-other[0],e.clientY-other[1])/before,
+        ...relative((e.clientX+other[0])/2,(e.clientY+other[1])/2));
+    }
+  }, { signal });
+  for (const type of ['pointerup','pointercancel','lostpointercapture'])
+    container.addEventListener(type,e=>pointers.delete(e.pointerId),{signal});
 }

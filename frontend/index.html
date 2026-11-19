@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14191e">
-  <title>数字物流网络 · 平台总览</title>
+  <title>全国物流网 · 数联科技</title>
   <link rel="stylesheet" href="./portal.css">
   <script type="module" src="./portal.js"></script>
 </head>
 <body class="portal">
   <header class="portal-header">
     <div class="shell masthead">
-      <a class="portal-brand" href="./" aria-label="数字物流网络首页"><span class="brand-symbol" aria-hidden="true"></span>数字物流网络</a>
-      <nav aria-label="主导航"><a href="#network">平台总览</a><a href="#catalog">方案 · 产品 · 场景</a><a href="#architecture">三层网络</a></nav>
-      <label class="region-select"><span>区域</span><select id="region" aria-label="区域"><option value="all">全国</option><option value="Henan">河南</option><option value="Jiangxi">江西</option><option value="Zhejiang">浙江</option></select></label>
+      <a class="portal-brand" href="./" aria-label="全国物流网首页"><span class="brand-symbol" aria-hidden="true"></span><span>数联科技<small>Unidata Tech</small></span></a>
+      <nav aria-label="主导航"><a href="#network">平台总览</a><a href="#catalog">方案 · 产品 · 场景</a><a href="#architecture">三层价值</a></nav>
+      <label class="region-select"><span>区域</span><select id="region" aria-label="区域"><option value="all">全国</option><option value="Henan">河南</option><option value="Jiangxi">江西</option><option value="Jiangsu">江苏</option><option value="Zhejiang">浙江</option></select></label>
     </div>
   </header>
 
@@ -36,25 +36,27 @@
     </section>
 
     <section class="shell network" id="network" aria-labelledby="network-title">
-      <div class="section-head"><div><p class="overline">平台总览</p><h2 id="network-title">全国物流网络</h2></div><span class="subtle">示意视图</span></div>
+      <div class="section-head"><div><p class="overline">平台总览</p><h2 id="network-title">全国物流网络</h2></div><span class="subtle">网络图层</span></div>
       <div class="network-stage" id="architecture">
-        <div class="network-info"><h3 id="layer-title">交通基础设施网</h3><p id="layer-copy">按省域观察物流节点与跨区域联系。</p><p id="region-note" class="subtle" aria-live="polite">当前范围：全国</p></div>
+        <div class="network-info"><h3 id="layer-title">交通基础设施网</h3><p id="layer-copy">按省域观察物流节点与跨区域联系。</p><p id="region-note" class="subtle" aria-live="polite">当前范围：全国</p><dl id="layer-details"></dl><a href="#catalog" id="layer-link">查看关联场景 ↓</a></div>
         <canvas id="network-map" role="img" aria-label="交通基础设施、物流通道与数字平台三层网络示意图"></canvas>
         <div class="map-tools" aria-label="地图视图操作"><button type="button" id="zoom-in" aria-label="放大">+</button><button type="button" id="zoom-out" aria-label="缩小">−</button><button type="button" id="reset-map">重置</button></div>
         <div class="layer-tabs" aria-label="网络图层"><button type="button" data-layer="0" aria-pressed="true">交通基础设施网</button><button type="button" data-layer="1" aria-pressed="false">物流通道网</button><button type="button" data-layer="2" aria-pressed="false">数字物流网</button></div>
       </div>
-      <p class="map-caption">图中连线和高亮为演示。行政边界底图来源 <a href="https://www.geoboundaries.org/" rel="noopener" target="_blank">geoBoundaries（CC BY 4.0）</a>。</p>
+      <p class="map-caption">省域底图 <a href="https://www.geoboundaries.org/" rel="noopener" target="_blank">geoBoundaries（CC BY 4.0）</a>。</p>
     </section>
 
     <section class="catalog" id="catalog" aria-labelledby="catalog-title">
       <div class="shell">
         <div class="section-head"><div><p class="overline">能力与应用</p><h2 id="catalog-title">方案 · 产品 · 场景</h2></div>
-          <div class="catalog-tabs" aria-label="目录分类"><button type="button" data-catalog="plans" aria-pressed="false">方案</button><button type="button" data-catalog="products" aria-pressed="false">产品</button><button type="button" data-catalog="scenarios" aria-pressed="true">场景</button></div>
+          <div class="catalog-tabs" aria-label="目录分类"><button type="button" data-catalog="plans" aria-pressed="false">方案 5</button><button type="button" data-catalog="products" aria-pressed="false">产品 4</button><button type="button" data-catalog="scenarios" aria-pressed="true">场景 9</button></div>
         </div>
+        <div id="sector-filters" aria-label="场景筛选"></div>
         <div id="catalog-content" class="catalog-grid" aria-live="polite"></div>
       </div>
     </section>
   </main>
-  <footer class="portal-footer"><div class="shell footer-row"><strong>数字物流网络</strong><span>平台与案例演示</span><a href="https://github.com/xuxuyayaya/supply-chain-index">源码与 PRD ↗</a></div></footer>
+  <dialog id="catalog-dialog"><form method="dialog"><button aria-label="关闭">×</button></form><p id="dialog-type" class="overline"></p><h2 id="dialog-title"></h2><p id="dialog-copy"></p><h3>业务工作</h3><p id="dialog-task"></p></dialog>
+  <footer class="portal-footer"><div class="shell footer-row"><strong>全国物流网</strong><span>数联科技 · 产品展示平台</span><a href="./PRD.docx" download>下载产品需求文档（Word）</a></div></footer>
 </body>
 </html>

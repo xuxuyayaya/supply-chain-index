@@ -1,0 +1,1564 @@
+{
+  "engine": {
+    "partId": "engine",
+    "label": "发动机",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "奇瑞开封整车生产端",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "发动机总成"
+      },
+      {
+        "id": "a",
+        "label": "芜湖埃科泰克动力总成有限公司",
+        "tier": 1,
+        "city": "芜湖",
+        "place": "芜湖",
+        "position": [
+          118.38,
+          31.33
+        ],
+        "product": "汽油及混合动力发动机总成"
+      },
+      {
+        "id": "b",
+        "label": "杰锋汽车动力系统股份有限公司",
+        "tier": 2,
+        "city": "芜湖",
+        "place": "芜湖",
+        "position": [
+          118.38,
+          31.33
+        ],
+        "product": "进排气相位器总成、相位器电磁铁等"
+      },
+      {
+        "id": "c",
+        "label": "安徽全柴动力股份有限公司",
+        "tier": 2,
+        "city": "滁州",
+        "place": "滁州",
+        "position": [
+          118.27,
+          32.08
+        ],
+        "product": "发动机缸体"
+      },
+      {
+        "id": "d",
+        "label": "无锡隆盛科技股份有限公司",
+        "tier": 2,
+        "city": "无锡",
+        "place": "无锡",
+        "position": [
+          120.3,
+          31.58
+        ],
+        "product": "混合动力汽油发动机EGR系统模块"
+      },
+      {
+        "id": "e",
+        "label": "扬州意得机械有限公司",
+        "tier": 3,
+        "city": "扬州",
+        "place": "扬州",
+        "position": [
+          119.42,
+          32.4
+        ],
+        "product": "粉末冶金件"
+      },
+      {
+        "id": "f",
+        "label": "山西东睦华晟粉末冶金有限公司",
+        "tier": 3,
+        "city": "太原",
+        "place": "太原",
+        "position": [
+          112.55,
+          37.87
+        ],
+        "product": "粉末冶金件"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "documented",
+        "from": "b"
+      },
+      {
+        "to": "a",
+        "status": "documented",
+        "from": "c"
+      },
+      {
+        "to": "a",
+        "status": "documented",
+        "from": "d"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "e"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "f"
+      }
+    ],
+    "sources": [
+      {
+        "label": "杰锋动力问询回复",
+        "url": "https://xinsanban.eastmoney.com/Article/NoticeContent?id=AN202603231820703440&pageIndex=3"
+      },
+      {
+        "label": "杰锋动力供应商披露",
+        "url": "https://www.bse.cn/disclosure/2026/2026-05-28/1779953458_796890.pdf"
+      },
+      {
+        "label": "全柴投资者问答",
+        "url": "https://yuanchuang.10jqka.com.cn/20250930/c671539711.shtml"
+      },
+      {
+        "label": "隆盛科技项目定点",
+        "url": "https://www.jiemian.com/article/9757403.html"
+      },
+      {
+        "label": "开封工厂动力来源",
+        "url": "https://www.autohome.com.cn/tech/202006/1001378.html"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "seat": {
+    "partId": "seat",
+    "label": "座椅",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "郑州比亚迪整车端",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "座椅总成"
+      },
+      {
+        "id": "a",
+        "label": "延锋（开封）座椅基地",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "汽车座椅及相关零部件"
+      },
+      {
+        "id": "b",
+        "label": "开封全盛汽车配件有限公司",
+        "tier": 2,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "汽车座椅骨架"
+      },
+      {
+        "id": "c",
+        "label": "上海平青",
+        "tier": 3,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "钢材、管材"
+      },
+      {
+        "id": "d",
+        "label": "好孩子型钢",
+        "tier": 3,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "管件"
+      },
+      {
+        "id": "e",
+        "label": "上海顺堰科技有限公司",
+        "tier": 3,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "小总成件"
+      },
+      {
+        "id": "f",
+        "label": "重庆唯升机械设备有限公司",
+        "tier": 3,
+        "city": "重庆",
+        "place": "重庆",
+        "position": [
+          106.55,
+          29.56
+        ],
+        "product": "冲压件"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "b"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "c"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "d"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "e"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "f"
+      }
+    ],
+    "sources": [
+      {
+        "label": "延锋开封基地报道",
+        "url": "https://finance.sina.com.cn/jjxw/2023-09-13/doc-imzmnvcw7923250.shtml"
+      },
+      {
+        "label": "中新网：开封汽车产业版图",
+        "url": "https://finance.eastmoney.com/a/202603183676140354.html"
+      },
+      {
+        "label": "全盛座舱公开转让说明书：2024年主要供方",
+        "url": "https://xinsanban.eastmoney.com/Article/NoticeContent?id=AN202509241749718171&pageIndex=38"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "fuel": {
+    "partId": "fuel",
+    "label": "燃油箱",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "郑州比亚迪整车端",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "燃油箱总成"
+      },
+      {
+        "id": "a",
+        "label": "亚普汽车部件（开封）有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "燃油箱总成"
+      },
+      {
+        "id": "b",
+        "label": "巴塞尔（Basell）",
+        "tier": 2,
+        "city": "境外",
+        "place": "境外",
+        "position": null,
+        "product": "高密度聚乙烯"
+      },
+      {
+        "id": "c",
+        "label": "道达尔（Total）",
+        "tier": 2,
+        "city": "境外",
+        "place": "境外",
+        "position": null,
+        "product": "高密度聚乙烯"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "b"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "c"
+      }
+    ],
+    "sources": [
+      {
+        "label": "国投采购：郑州比亚迪燃油箱项目",
+        "url": "https://www.sdicc.com.cn/cgxx/ggDetail?gcGuid=7ebe50ab-f36a-4af1-8f12-b0d0915ee188&ggGuid=4ae3ff0a-76f3-4ac1-85fa-479a62074a19"
+      },
+      {
+        "label": "亚普招股书：原料采购",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=4234127&stockid=603013"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "harness": {
+    "partId": "harness",
+    "label": "线束",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "东风日产车型配套端",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "线束"
+      },
+      {
+        "id": "a",
+        "label": "开封住成电装有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "汽车线束"
+      },
+      {
+        "id": "b",
+        "label": "宁波卡倍亿电气技术股份有限公司",
+        "tier": 2,
+        "city": "宁波",
+        "place": "宁波",
+        "position": [
+          121.55,
+          29.87
+        ],
+        "product": "汽车线缆"
+      },
+      {
+        "id": "c",
+        "label": "常州同泰高导新材料有限公司",
+        "tier": 3,
+        "city": "常州",
+        "place": "常州",
+        "position": [
+          119.95,
+          31.78
+        ],
+        "product": "铜杆、铜丝"
+      },
+      {
+        "id": "d",
+        "label": "江铜华北（天津）铜业有限公司",
+        "tier": 3,
+        "city": "天津",
+        "place": "天津",
+        "position": [
+          117.2,
+          39.13
+        ],
+        "product": "铜杆、铜丝"
+      },
+      {
+        "id": "e",
+        "label": "开封日津汽车线束有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "汽车线束及零部件"
+      },
+      {
+        "id": "x",
+        "label": "长安／奇瑞／比亚迪合作端",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "汽车线束"
+      },
+      {
+        "id": "f",
+        "label": "宁波金田高导新材料有限公司",
+        "tier": 3,
+        "city": "宁波",
+        "place": "宁波",
+        "position": [
+          121.55,
+          29.87
+        ],
+        "product": "铜杆、铜丝"
+      },
+      {
+        "id": "g",
+        "label": "常州金源铜业有限公司",
+        "tier": 3,
+        "city": "常州",
+        "place": "常州",
+        "position": [
+          119.95,
+          31.78
+        ],
+        "product": "铜杆、铜丝"
+      },
+      {
+        "id": "h",
+        "label": "德阳信方圆有色金属有限公司",
+        "tier": 3,
+        "city": "德阳",
+        "place": "德阳",
+        "position": [
+          104.4,
+          31.13
+        ],
+        "product": "铜杆、铜丝"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "documented",
+        "from": "b"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "c"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "d"
+      },
+      {
+        "to": "x",
+        "status": "association",
+        "from": "e"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "f"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "g"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "h"
+      }
+    ],
+    "sources": [
+      {
+        "label": "住友电装官方据点信息",
+        "url": "https://www.sws.co.jp/corporation/outline/office/detail/kzc.html"
+      },
+      {
+        "label": "卡倍亿审核问询回复",
+        "url": "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=7348103&stockid=300863"
+      },
+      {
+        "label": "开封商务部门：日津与长安、奇瑞、比亚迪合作",
+        "url": "https://kf.rootinhenan.gov.cn/sitesources/kf/page_pc/cxzc/articlec8fec39077194ed999f3b971e7d36ad1.html"
+      },
+      {
+        "label": "卡倍亿募集说明书：2025年五家铜材供应商",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12319552&stockid=300863"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "body": {
+    "partId": "body",
+    "label": "车身冲压",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "奇瑞河南／开封整车端",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "车身结构件"
+      },
+      {
+        "id": "a",
+        "label": "开封武秀汽车配件有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "冲压件、辊压件、焊接总成件"
+      },
+      {
+        "id": "b",
+        "label": "开封东秀汽车零部件有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "冲压件、焊接件"
+      },
+      {
+        "id": "x",
+        "label": "奇瑞商用车合作端",
+        "tier": 0,
+        "city": "芜湖",
+        "place": "芜湖",
+        "position": [
+          118.38,
+          31.33
+        ],
+        "product": "车身零部件"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "x",
+        "status": "association",
+        "from": "b"
+      }
+    ],
+    "sources": [
+      {
+        "label": "企业公开招聘信息",
+        "url": "https://www.zhaopin.com/jobdetail/CC543459080J40904591703.htm"
+      },
+      {
+        "label": "开封政府重点项目：东秀冲压焊接",
+        "url": "https://www.kaifeng.gov.cn/kfsrmzfwz/szfbx/1742071194361966592/peDyo3zN.pdf"
+      },
+      {
+        "label": "泓毅股份审计问询：东秀与奇瑞商用车业务往来",
+        "url": "https://pdf.dfcfw.com/pdf/H2_AN202602061819809058_1.pdf%3F1770395411000.pdf"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "trim": {
+    "partId": "trim",
+    "label": "内外饰",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "海马／日产等车型配套端",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "内外饰件"
+      },
+      {
+        "id": "a",
+        "label": "开封中达汽车饰件有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "仪表板、保险杠、门护板"
+      },
+      {
+        "id": "b",
+        "label": "金发科技股份有限公司",
+        "tier": 2,
+        "city": "广州",
+        "place": "广州",
+        "position": [
+          113.27,
+          23.13
+        ],
+        "product": "塑料粒子等"
+      },
+      {
+        "id": "c",
+        "label": "苏州禾昌聚合材料股份有限公司",
+        "tier": 2,
+        "city": "苏州",
+        "place": "苏州",
+        "position": [
+          120.58,
+          31.3
+        ],
+        "product": "塑料粒子等"
+      },
+      {
+        "id": "d",
+        "label": "河南乔路铭汽车零部件有限公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "注塑件"
+      },
+      {
+        "id": "e",
+        "label": "成都金发科技新材料有限公司",
+        "tier": 2,
+        "city": "成都",
+        "place": "成都",
+        "position": [
+          104.07,
+          30.67
+        ],
+        "product": "塑料粒子；集团级采购"
+      },
+      {
+        "id": "x",
+        "label": "郑州比亚迪整车端",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "注塑饰件与包覆件"
+      },
+      {
+        "id": "f",
+        "label": "湖北华城科技有限责任公司",
+        "tier": 2,
+        "city": "孝感",
+        "place": "孝感",
+        "position": [
+          113.92,
+          30.93
+        ],
+        "product": "改性塑料粒子；乔路铭集团采购"
+      },
+      {
+        "id": "g",
+        "label": "上海锦湖日丽塑料有限公司",
+        "tier": 2,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "塑料粒子；乔路铭集团采购"
+      },
+      {
+        "id": "h",
+        "label": "会通新材料股份有限公司",
+        "tier": 2,
+        "city": "合肥",
+        "place": "合肥",
+        "position": [
+          117.23,
+          31.82
+        ],
+        "product": "塑料粒子；乔路铭集团采购"
+      },
+      {
+        "id": "i",
+        "label": "延鑫汽车饰件开封有限责任公司",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "座椅、仪表板、扶手包覆件"
+      },
+      {
+        "id": "j",
+        "label": "中国石化化工销售有限公司",
+        "tier": 3,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "聚丙烯等树脂原料；禾昌集团采购"
+      },
+      {
+        "id": "k",
+        "label": "利安德巴赛尔聚烯烃（上海）有限公司",
+        "tier": 3,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "聚烯烃树脂；禾昌集团采购"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "b"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "c"
+      },
+      {
+        "to": "x",
+        "status": "documented",
+        "from": "d"
+      },
+      {
+        "to": "d",
+        "status": "association",
+        "from": "e",
+        "share": 7.81,
+        "basis": "乔路铭集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "d",
+        "status": "association",
+        "from": "c",
+        "share": 12.91,
+        "basis": "乔路铭集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "d",
+        "status": "association",
+        "from": "f",
+        "share": 13.29,
+        "basis": "乔路铭集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "d",
+        "status": "association",
+        "from": "g",
+        "share": 9.06,
+        "basis": "乔路铭集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "d",
+        "status": "association",
+        "from": "h",
+        "share": 5.94,
+        "basis": "乔路铭集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "x",
+        "status": "documented",
+        "from": "i"
+      },
+      {
+        "to": "c",
+        "status": "association",
+        "from": "j"
+      },
+      {
+        "to": "c",
+        "status": "association",
+        "from": "k"
+      }
+    ],
+    "sources": [
+      {
+        "label": "原钧达汽车饰件招股说明书",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=3221312&stockid=002865"
+      },
+      {
+        "label": "乔路铭问询：河南开封基地配套比亚迪郑州基地",
+        "url": "https://xinsanban.eastmoney.com/Article/NoticeContent?id=AN202604091821099110&pageIndex=19"
+      },
+      {
+        "label": "西上海披露：延鑫开封工厂向比亚迪提供包覆件",
+        "url": "https://www.jiemian.com/article/10863841.html"
+      },
+      {
+        "label": "乔路铭招股书：集团采购塑料粒子",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12410723&stockid=920079"
+      },
+      {
+        "label": "禾昌聚合2025年报：上游树脂供应商",
+        "url": "https://dataclouds.cninfo.com.cn/sjother2/bse_onmarket/2026/20260420/57a54cff634a42ca83b977a8cac43e82.pdf"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "exhaust": {
+    "partId": "exhaust",
+    "label": "排气系统",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "奇瑞汽车配套端（集团口径）",
+        "tier": 0,
+        "city": "芜湖",
+        "place": "芜湖",
+        "position": [
+          118.38,
+          31.33
+        ],
+        "product": "排气系统零部件"
+      },
+      {
+        "id": "a",
+        "label": "杰锋汽车动力系统股份有限公司",
+        "tier": 1,
+        "city": "芜湖",
+        "place": "芜湖",
+        "position": [
+          118.38,
+          31.33
+        ],
+        "product": "排气系统相关产品"
+      },
+      {
+        "id": "b",
+        "label": "浙江新诚汽车部件有限公司",
+        "tier": 2,
+        "city": "浙江",
+        "place": "浙江",
+        "position": null,
+        "product": "管路件"
+      },
+      {
+        "id": "c",
+        "label": "江苏大周不锈钢管有限公司",
+        "tier": 2,
+        "city": "苏州",
+        "place": "苏州",
+        "position": [
+          120.58,
+          31.3
+        ],
+        "product": "管路件"
+      },
+      {
+        "id": "d",
+        "label": "青岛浦新不锈钢有限公司",
+        "tier": 2,
+        "city": "青岛",
+        "place": "青岛",
+        "position": [
+          120.38,
+          36.07
+        ],
+        "product": "不锈钢原材料"
+      },
+      {
+        "id": "e",
+        "label": "山东新华阳金属材料有限公司",
+        "tier": 2,
+        "city": "山东",
+        "place": "山东",
+        "position": null,
+        "product": "金属材料；杰锋集团采购"
+      },
+      {
+        "id": "f",
+        "label": "宁波市鄞州中昊金属制品有限公司",
+        "tier": 2,
+        "city": "宁波",
+        "place": "宁波",
+        "position": [
+          121.55,
+          29.87
+        ],
+        "product": "金属制品；杰锋集团采购"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a",
+        "share": 78.17,
+        "basis": "奇瑞排气系统零部件装车数量",
+        "year": 2025
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "b",
+        "share": 6.72,
+        "basis": "杰锋动力集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "c",
+        "share": 3.8,
+        "basis": "杰锋动力集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "d",
+        "share": 4.32,
+        "basis": "杰锋动力集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "e",
+        "share": 4.35,
+        "basis": "杰锋动力集团年度采购额",
+        "year": 2025
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "f",
+        "share": 4.29,
+        "basis": "杰锋动力集团年度采购额",
+        "year": 2025
+      }
+    ],
+    "sources": [
+      {
+        "label": "杰锋动力公开披露",
+        "url": "https://xinsanban.eastmoney.com/Article/NoticeContent?id=AN202603231820703440&pageIndex=3"
+      },
+      {
+        "label": "杰锋招股书：上游采购",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12526787&stockid=920269"
+      },
+      {
+        "label": "杰锋动力2025年年报：前五大供应商及采购占比",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=11993502&stockid=920269"
+      },
+      {
+        "label": "杰锋动力问询回复：奇瑞排气零部件装车供货占比",
+        "url": "https://www.bse.cn/disclosure/2026/2026-05-28/1779953457_483438.pdf"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "axle": {
+    "partId": "axle",
+    "label": "后桥及其他",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "奇瑞／开瑞整车合作端",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "后桥及制动总成"
+      },
+      {
+        "id": "a",
+        "label": "五菱工业（开封基地）",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "后桥产品；开封基地客户未具名"
+      },
+      {
+        "id": "b",
+        "label": "柳州卓通汽车零部件有限公司",
+        "tier": 1,
+        "city": "柳州",
+        "place": "柳州",
+        "position": [
+          109.43,
+          24.33
+        ],
+        "product": "后桥制动器总成；配套开瑞新能源集团"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "association",
+        "from": "a"
+      },
+      {
+        "to": "o",
+        "status": "association",
+        "from": "b"
+      }
+    ],
+    "sources": [
+      {
+        "label": "中新网：开封汽车产业版图",
+        "url": "https://finance.eastmoney.com/a/202603183676140354.html"
+      },
+      {
+        "label": "五菱工业：开封基地后桥产品",
+        "url": "https://www.wulingauto.com/CompanyNews/info.aspx?itemid=1086"
+      },
+      {
+        "label": "五菱工业：卓通后桥制动总成配套开瑞新能源",
+        "url": "https://www.wulingauto.com/CompanyNews/info.aspx?itemid=1073"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "thermal": {
+    "partId": "thermal",
+    "label": "热管理",
+    "nodes": [
+      {
+        "id": "a",
+        "label": "江苏超力电器股份有限公司（开封基地）",
+        "tier": 1,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "发动机冷却、空调及电池热管理相关产品；开封基地单品未披露"
+      },
+      {
+        "id": "x",
+        "label": "超力集团整车客户",
+        "tier": 0,
+        "city": "郑州",
+        "place": "郑州",
+        "position": [
+          113.75,
+          34.55
+        ],
+        "product": "集团客户，未定位开封基地订单"
+      }
+    ],
+    "edges": [
+      {
+        "to": "x",
+        "status": "association",
+        "from": "a"
+      }
+    ],
+    "sources": [
+      {
+        "label": "江苏超力企业官网：开封基地与产品",
+        "url": "https://www.chaoli-electric.com/Product.html"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "electric": {
+    "partId": "electric",
+    "label": "动力电池与电驱",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "奇瑞商用车／开瑞新能源车型端",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "动力电池"
+      },
+      {
+        "id": "a",
+        "label": "中创新航科技集团股份有限公司",
+        "tier": 1,
+        "city": "常州",
+        "place": "常州",
+        "position": [
+          119.95,
+          31.78
+        ],
+        "product": "动力电池；江豚、小象车型合作"
+      },
+      {
+        "id": "b",
+        "label": "天赐材料股份有限公司",
+        "tier": 2,
+        "city": "广州",
+        "place": "广州",
+        "position": [
+          113.27,
+          23.13
+        ],
+        "product": "电解液；2026—2028年保供框架，非已交付量"
+      },
+      {
+        "id": "c",
+        "label": "江西天赐中硝新材料有限公司",
+        "tier": 3,
+        "city": "九江",
+        "place": "九江",
+        "position": [
+          116.0,
+          29.7
+        ],
+        "product": "六氟磷酸锂浓缩液；天赐集团内部上游"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "association",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "b"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "c"
+      }
+    ],
+    "sources": [
+      {
+        "label": "中创新航：奇瑞商用车江豚、小象车型合作",
+        "url": "https://www.calb-tech.com/NewsDetails/1428706525306589184.html"
+      },
+      {
+        "label": "天赐材料：与中创新航保供框架公告",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=11589434&stockid=002709"
+      },
+      {
+        "label": "天赐材料：江西天赐中硝子公司及材料",
+        "url": "https://tinci.com/fgs/"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "chassis": {
+    "partId": "chassis",
+    "label": "底盘制动",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "捷途开封车型 SQR6480T1NTCD",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "ABS／ESC"
+      },
+      {
+        "id": "a",
+        "label": "博世汽车部件（苏州）有限公司",
+        "tier": 1,
+        "city": "苏州",
+        "place": "苏州",
+        "position": [
+          120.58,
+          31.3
+        ],
+        "product": "ESP9 防抱死制动系统（可选配）"
+      },
+      {
+        "id": "b",
+        "label": "天津英创汇智汽车技术有限公司",
+        "tier": 1,
+        "city": "天津",
+        "place": "天津",
+        "position": [
+          117.2,
+          39.13
+        ],
+        "product": "207ESC 防抱死制动系统（可选配）"
+      },
+      {
+        "id": "x",
+        "label": "威麟开封车型 SQR1030H82D3",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "ABS／ESC"
+      },
+      {
+        "id": "c",
+        "label": "苏州国芯科技股份有限公司",
+        "tier": 2,
+        "city": "苏州",
+        "place": "苏州",
+        "position": [
+          120.58,
+          31.3
+        ],
+        "product": "车规级MCU；英创汇智ABS／ESC系列合作"
+      },
+      {
+        "id": "d",
+        "label": "中芯国际集成电路制造有限公司",
+        "tier": 3,
+        "city": "上海",
+        "place": "上海",
+        "position": [
+          121.47,
+          31.23
+        ],
+        "product": "晶圆代工；国芯集团供应链"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "a"
+      },
+      {
+        "to": "o",
+        "status": "documented",
+        "from": "b"
+      },
+      {
+        "to": "x",
+        "status": "documented",
+        "from": "b"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "c"
+      },
+      {
+        "to": "c",
+        "status": "association",
+        "from": "d"
+      }
+    ],
+    "sources": [
+      {
+        "label": "工信部：捷途开封车型公示及 ABS 供应商",
+        "url": "https://www.miit.gov.cn/datainfo/dljdclscqyjcpgg/xcpgs408weweweew/art/2026/art_15e053a997f14e5495284939b02367b8.html"
+      },
+      {
+        "label": "工信部：威麟开封车型公示及 ABS 供应商",
+        "url": "https://www.miit.gov.cn/datainfo/dljdclscqyjcpgg/xcpgs395sfwe85/art/2025/art_d04227a1cdfb4dd3ab481855ee054d47.html"
+      },
+      {
+        "label": "英创汇智：车规MCU供应商国芯科技",
+        "url": "https://www.trinova-tech.com/news/255.html"
+      },
+      {
+        "label": "国芯科技2026半年报：晶圆代工供应链",
+        "url": "https://vip.stock.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12557999&stockid=688262"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "glass": {
+    "partId": "glass",
+    "label": "玻璃",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "奇瑞车型合作端",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "汽车玻璃"
+      },
+      {
+        "id": "a",
+        "label": "福耀玻璃（安徽）有限公司",
+        "tier": 1,
+        "city": "合肥",
+        "place": "合肥",
+        "position": [
+          117.23,
+          31.82
+        ],
+        "product": "汽车玻璃；奇瑞集团合作"
+      },
+      {
+        "id": "b",
+        "label": "本溪福耀浮法玻璃有限公司",
+        "tier": 2,
+        "city": "本溪",
+        "place": "本溪",
+        "position": [
+          123.77,
+          41.3
+        ],
+        "product": "浮法玻璃；福耀集团上游环节"
+      },
+      {
+        "id": "c",
+        "label": "本溪福耀硅砂有限公司",
+        "tier": 3,
+        "city": "本溪",
+        "place": "本溪",
+        "position": [
+          123.77,
+          41.3
+        ],
+        "product": "硅砂；福耀集团上游环节"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "association",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "association",
+        "from": "b"
+      },
+      {
+        "to": "b",
+        "status": "association",
+        "from": "c"
+      }
+    ],
+    "sources": [
+      {
+        "label": "福耀安徽基地与奇瑞集团合作",
+        "url": "https://api.app.anhuinews.com/pc/content/9214673.html"
+      },
+      {
+        "label": "福耀2025年报：浮法玻璃与硅砂上游",
+        "url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12000286&stockid=600660"
+      },
+      {
+        "label": "福耀官网：本溪浮法与硅砂企业",
+        "url": "https://www.fuyaogroup.com/contact.html"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  },
+  "tire": {
+    "partId": "tire",
+    "label": "轮胎",
+    "nodes": [
+      {
+        "id": "o",
+        "label": "捷途X70车型合作端",
+        "tier": 0,
+        "city": "开封",
+        "place": "开封",
+        "position": [
+          114.3,
+          34.8
+        ],
+        "product": "整车轮胎"
+      },
+      {
+        "id": "a",
+        "label": "金宇轮胎集团有限公司",
+        "tier": 1,
+        "city": "东营",
+        "place": "东营",
+        "position": [
+          118.67,
+          37.43
+        ],
+        "product": "金宇YS82+轮胎；X70车型装配资料"
+      },
+      {
+        "id": "b",
+        "label": "江苏兴达钢帘线股份有限公司",
+        "tier": 2,
+        "city": "兴化",
+        "place": "兴化",
+        "position": [
+          119.85,
+          32.93
+        ],
+        "product": "钢帘线；金宇轮胎战略供方"
+      },
+      {
+        "id": "c",
+        "label": "青岛特殊钢铁有限公司",
+        "tier": 3,
+        "city": "青岛",
+        "place": "青岛",
+        "position": [
+          120.38,
+          36.07
+        ],
+        "product": "钢帘线用盘条；兴达战略供方"
+      }
+    ],
+    "edges": [
+      {
+        "to": "o",
+        "status": "association",
+        "from": "a"
+      },
+      {
+        "to": "a",
+        "status": "documented",
+        "from": "b"
+      },
+      {
+        "to": "b",
+        "status": "documented",
+        "from": "c"
+      }
+    ],
+    "sources": [
+      {
+        "label": "捷途X70车型金宇轮胎配置",
+        "url": "https://www.autohome.com.cn/4683/20049/38/Section.html"
+      },
+      {
+        "label": "兴达官网：金宇轮胎战略供方",
+        "url": "https://www.xingda.com.cn/news/info/104.html"
+      },
+      {
+        "label": "青岛特钢官网：兴达盘条战略合作",
+        "url": "https://qdtg.citicsteel.com/index.php?s=%2FMobile%2FShow%2Findex%2Fcid%2F273%2Fid%2F1137.html"
+      }
+    ],
+    "source": {
+      "note": "企业与产品按该品类公开资料归集。虚线包含集团、车型或框架协议层面的关联，具体工厂订单需单独核实。"
+    }
+  }
+}

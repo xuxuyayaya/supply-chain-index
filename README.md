@@ -1,6 +1,6 @@
 # 产业链供应分析指数
 
-可复用的产业链供应分析场景。默认案例是虚构的海川先进制造产业链。开封汽车是参考示例。
+全国物流网门户与城市产业链供应评价。可选择苏州工业机器人、南昌储能装备、开封汽车及零部件，按月查看供应分、同业差距和部件供货路径。
 
 - [产品需求文档](docs/PRD.md)
 - [Word 版 PRD](docs/PRD.docx)
@@ -20,14 +20,14 @@ npm test
 
 ## 部署
 
-`main` 分支包含完整前后端。GitHub Pages 从 `gh-pages` 分支根目录发布。运行 `npm run snapshot` 后，前端目录包含静态演示快照。发布时将 `frontend/` 内容同步到 Pages 分支。
+`main` 分支包含完整前后端。GitHub Pages 从 `gh-pages` 分支根目录发布。运行 `npm run snapshot` 后，前端目录包含月度快照。发布时将 `frontend/` 内容与 docs/PRD.docx 同步到 Pages 分支根目录。
 
 Render 使用 Node.js 运行时，构建命令 `npm test`，启动命令 `npm start`。后端监听 `PORT`。健康端点为 `/api/health`。前端部署域名或 API 域名变化时，同步更新服务端 CORS 以及 `frontend/app.js` 的 API 地址。
 
-所有案例为演示。网页中的企业关系是业务层级示意。
+月度评分和经营数据采用情景测算。开封 13 类部件的节点、供货范围与公开资料见 server/kaifeng-trace.json。
 
 ## 指数接口与高德地图
 
 - `GET /api/index?case=kaifeng-auto&period=2026-10` 返回总分、四项指标、贸易结构与默认部件的追溯数据。可带 `part` 查询指定部件。
-- 点击「环节覆盖」展开供应追溯。地图标注城市级演示点，连线表示供应关系。
+- 点击「环节覆盖」展开供应追溯。地图支持拖动、滚轮、双指及按钮缩放。城市点位与供货路径可联动企业披露资料。
 - 在 Render 服务环境中设置 `AMAP_WEB_KEY`、`AMAP_SECURITY_CODE`，并在高德控制台允许 `xuxuyayaya.github.io` 和该服务的 Render 域名。安全密钥仅由服务端地图代理使用。配置前，页面提供城市分布示意和高德城市跳转。
