@@ -221,7 +221,10 @@ function renderOverview(data) {
   canvas.setAttribute("role", "img");
   canvas.setAttribute(
     "aria-label",
-    "四项标准化得分与优秀线对比，完整数值见右侧指标",
+    "四项标准化得分与优秀线对比。" +
+      data.metrics
+        .map((item) => item.name + "标准分 " + number(item.score))
+        .join("，"),
   );
   const legend = el("figcaption", undefined, "portrait-legend");
   legend.append(
