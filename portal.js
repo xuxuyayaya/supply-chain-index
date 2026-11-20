@@ -102,8 +102,8 @@ function showCatalog(key) {
     if (url) {
       const link = document.createElement('a');
       const area = byId('region').value;
-      const cases = { Henan: 'kaifeng-auto', Jiangxi: 'energy-equipment', Jiangsu: 'advanced-manufacturing' };
-      link.href = url === './supply-index.html' && cases[area] ? url + '?case=' + cases[area] : url;
+      const cities = { Henan: 'kaifeng', Jiangxi: 'nanchang', Jiangsu: 'suzhou' };
+      link.href = url === './supply-index.html' && cities[area] ? url + '?city=' + cities[area] : url;
       link.textContent = url.startsWith('#') ? '查看网络 ↗' : '进入场景 ↗';
       link.setAttribute('aria-label', link.textContent + ' ' + title);
       content.append(link);
