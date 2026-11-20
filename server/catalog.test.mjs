@@ -90,3 +90,20 @@ test('city and industry metadata scopes each available assessment', () => {
     }
   }
 });
+
+test('assessment explains the current city and prioritizes supported improvements', () => {
+  const data = getIndex('kaifeng-auto', '2026-10');
+  assert.equal(data.assessment.headline, '供应基础较好，优先降低链主依赖');
+  assert.match(data.assessment.summary, /提升 3.1 分/);
+  assert.match(data.assessment.findings[0].text, /车规级芯片/);
+  assert.match(data.assessment.findings[1].text, /外部采购 3.6 亿元/);
+  assert.equal(data.assessment.actions[0].dimension, 'leader');
+  assert.match(data.assessment.development.text, /距同业测算基准 4.0 分/);
+  assert.doesNotMatch(JSON.stringify(data.assessment), /×|加权|计分|＝/);
+  const older = getIndex('kaifeng-auto', '2026-09').assessment;
+  assert.match(older.summary, /首个评价月份/);
+  assert.match(older.findings[0].title, /4 个/);
+  const changed = getIndex('suzhou-storage').assessment;
+  assert.equal(changed.actions[0].dimension, 'local');
+  assert.match(changed.summary, /苏州市储能装备/);
+});

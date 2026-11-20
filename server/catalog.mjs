@@ -1,3 +1,4 @@
+import { assessSupply } from './assessment.mjs';
 import kaifengTrace from './kaifeng-trace.json' with { type: 'json' };
 
 const cases = [
@@ -171,9 +172,9 @@ export function getCase(id, period) {
     id: partId, label, amount: amount / partTotal * total,
     traceId: ['steel', 'other'].includes(partId) ? null : partId
   })).sort((a, b) => b.amount - a.amount);
-  return {
+  const record = {
     ...listCases().find(item => item.id === id),
-    period: date, mode: 'modelled', version: '3.0', source, index, metrics,
+    period: date, mode: 'modelled', version: '3.1', source, index, metrics,
     evaluation: { previous: previous ? { period: previous.period, score: previous.index } : null,
       logistics, cost, ontime, safety, resilience, bottlenecks, keyGoods, development,
       addedValue, peerValue, peerIndex },
@@ -185,6 +186,7 @@ export function getCase(id, period) {
     },
     traceParts: id === 'kaifeng-auto' ? Object.values(kaifengTrace).map(({partId, label}) => ({id: partId, label})) : entry.parts.filter(([partId]) => !['steel', 'other'].includes(partId)).map(([partId, label]) => ({ id: partId, label }))
   };
+  return { ...record, assessment: assessSupply(record) };
 }
 
 
