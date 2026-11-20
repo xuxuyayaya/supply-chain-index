@@ -55,7 +55,7 @@ const dimensions = {
     description: "查看链主营收在链上营收中的占比及反向计分结果。",
   },
 };
-let caseRequest, traceRequest, graphObserver;
+let caseRequest, traceRequest, graphObserver, portraitObserver;
 const number = (value) => (value === null ? "—" : Number(value).toFixed(1));
 const tierLabel = (tier) => (tier === 0 ? "整机端" : "Tier " + tier);
 
@@ -131,10 +131,19 @@ function renderOverview(data) {
   score.append(el("p", "产业链供应分", "score-eyebrow"));
   const valueRow = el("div", undefined, "score-line");
   const value = el(
-    "p",
+    "button",
     data.index === null ? "暂不可计算" : number(data.index),
-    "number",
+    "number score-open",
   );
+  value.type = "button";
+  value.disabled = data.index === null;
+  value.setAttribute(
+    "aria-label",
+    "供应分 " + number(data.index) + "，查看计算过程",
+  );
+  value.setAttribute("aria-haspopup", "dialog");
+  value.setAttribute("aria-controls", "calculation-dialog");
+  value.onclick = () => openCalculation();
   if (data.index !== null) value.append(el("small", "/ 100"));
   valueRow.append(value, el("span", band, "score-grade"));
   score.append(
@@ -165,28 +174,14 @@ function renderOverview(data) {
       "score-summary",
     ),
   );
-  const scale = el("div", undefined, "score-scale");
-  scale.setAttribute(
-    "aria-label",
-    "供应分分档，60 分中等、70 分良好、85 分优秀",
+  const methodLink = el(
+    "button",
+    "查看计算过程",
+    "text-link score-method-link",
   );
-  for (const width of [60, 10, 15, 15]) {
-    const part = el("span");
-    part.style.flex = width;
-    scale.append(part);
-  }
-  if (data.index !== null) {
-    const cursor = el("i");
-    cursor.style.left = data.index + "%";
-    scale.append(cursor);
-  }
-  const labels = el("div", undefined, "scale-labels");
-  for (const point of [0, 60, 70, 85, 100]) {
-    const label = el("span", String(point));
-    label.style.left = point + "%";
-    labels.append(label);
-  }
-  score.append(scale, labels);
+  methodLink.type = "button";
+  methodLink.onclick = () => openCalculation();
+  score.append(methodLink);
   const insight = el("article", undefined, "diagnosis");
   insight.append(el("span", "本期关注", "section-kicker"));
   if (priority?.gap > 0) {
@@ -204,7 +199,7 @@ function renderOverview(data) {
     );
     const action = el("button", "查看" + priority.name, "text-link");
     action.type = "button";
-    action.onclick = () => showScreen("dimensions", priority.id, true);
+    action.onclick = () => openCalculation(priority.id);
     insight.append(action);
   } else {
     insight.append(
@@ -213,67 +208,290 @@ function renderOverview(data) {
     );
   }
   grid.append(score, insight);
-  const bottom = el("div", undefined, "overview-bottom");
-  const drivers = el("div");
-  const heading = el("div", undefined, "block-head");
-  heading.append(el("h3", "四个方面看供应能力"));
-  const list = el("div", undefined, "driver-list");
+  const portrait = el("section", undefined, "supply-portrait");
+  portrait.setAttribute("aria-label", "供应能力画像");
+  const portraitHead = el("div", undefined, "portrait-heading");
+  portraitHead.append(
+    el("h3", "供应能力画像"),
+    el("p", "点击指标，查看计算公式"),
+  );
+  const portraitBody = el("div", undefined, "portrait-body");
+  const visual = el("figure", undefined, "portrait-visual");
+  const canvas = el("canvas", undefined, "supply-radar");
+  canvas.setAttribute("role", "img");
+  canvas.setAttribute(
+    "aria-label",
+    "四项标准化得分与优秀线对比。" +
+      data.metrics
+        .map((item) => item.name + "标准分 " + number(item.score))
+        .join("，"),
+  );
+  const legend = el("figcaption", undefined, "portrait-legend");
+  legend.append(
+    el("span", "本期标准分", "current"),
+    el("span", "优秀线", "goal"),
+  );
+  visual.append(canvas, legend);
+  const indicators = el("div", undefined, "portrait-metrics");
   for (const item of data.metrics) {
-    const button = el("button", undefined, "driver");
+    const button = el("button", undefined, "portrait-metric");
     button.type = "button";
-    const track = el("span", undefined, "track");
-    const fill = el("i");
-    fill.style.width = (item.score ?? 0) + "%";
-    track.append(fill);
-    button.append(
-      el("span", item.name),
-      track,
-      el("strong", number(item.score) + " 分"),
-    );
+    button.setAttribute("aria-haspopup", "dialog");
+    button.setAttribute("aria-controls", "calculation-dialog");
     button.setAttribute(
       "aria-label",
-      item.name + "标准分 " + number(item.score) + "，查看指标分析",
+      item.name + " " + number(item.value) + "%，查看计算公式",
     );
-    button.onclick = () => showScreen("dimensions", item.id, true);
-    list.append(button);
+    const raw = el("strong", number(item.value));
+    raw.append(el("small", "%"));
+    button.append(
+      el("span", item.name),
+      raw,
+      el(
+        "small",
+        item.grade + " · 权重 " + Math.round(item.weight * 100) + "%",
+      ),
+    );
+    button.onclick = () => openCalculation(item.id);
+    indicators.append(button);
   }
-  drivers.append(heading, list);
-  const context = el("div");
-  context.append(el("h3", "供应规模"));
-  const facts = el("dl", undefined, "overview-facts");
-  for (const [label, amount, unit] of [
-    ["本地采购", data.trade.origins[0].amount, "亿元"],
-    ["购销规模", data.trade.total, "亿元"],
+  portraitBody.append(visual, indicators);
+  portrait.append(portraitHead, portraitBody);
+  const facts = el("dl", undefined, "supply-volume");
+  for (const [label, amount] of [
+    ["本地采购", data.trade.origins[0].amount],
+    ["购销规模", data.trade.total],
   ]) {
     const fact = el("div");
     const value = el("dd", number(amount));
-    value.append(el("small", " " + unit));
+    value.append(el("small", " 亿元"));
     fact.append(el("dt", label), value);
     facts.append(fact);
   }
-  const method = el("details", undefined, "score-method");
-  method.append(el("summary", "供应分如何计算"));
-  const equation = el("div", undefined, "score-equation");
-  for (const item of data.metrics) {
-    const term = el("div", undefined, "score-term");
-    term.append(
-      el("strong", number(item.score)),
-      el("span", " × " + Math.round(item.weight * 100) + "%"),
-      el("small", item.name),
-    );
-    equation.append(term);
+  view["overview-content"].className = "";
+  view["overview-content"].replaceChildren(grid, facts, portrait);
+  portraitObserver?.disconnect();
+  portraitObserver = new ResizeObserver(() =>
+    drawSupplyRadar(canvas, data.metrics),
+  );
+  portraitObserver.observe(canvas);
+}
+
+function drawSupplyRadar(canvas, metrics) {
+  const { width, height } = canvas.getBoundingClientRect();
+  if (!width || !height) return;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.scale(ratio, ratio);
+  if (metrics.some((item) => item.score === null)) {
+    ctx.fillStyle = "#6d747c";
+    ctx.font = "14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("部分指标暂无有效值", width / 2, height / 2);
+    return;
   }
-  method.append(
-    equation,
-    el(
-      "p",
-      "正向指标取百分数原值，逆向指标用 100 减原值。四项加权相加得到供应分。",
+  const center = [width / 2, height / 2];
+  const radius = Math.min(width / 2 - 83, height / 2 - 33);
+  const point = (i, value) => {
+    const angle = (i * Math.PI) / 2 - Math.PI / 2;
+    return [
+      center[0] + (Math.cos(angle) * radius * value) / 100,
+      center[1] + (Math.sin(angle) * radius * value) / 100,
+    ];
+  };
+  const polygon = (values) => {
+    ctx.beginPath();
+    values.forEach((v, i) =>
+      i ? ctx.lineTo(...point(i, v)) : ctx.moveTo(...point(i, v)),
+    );
+    ctx.closePath();
+  };
+  for (const level of [25, 50, 75, 100]) {
+    polygon(metrics.map(() => level));
+    ctx.strokeStyle = "#e6eaed";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  metrics.forEach((item, i) => {
+    ctx.beginPath();
+    ctx.moveTo(...center);
+    ctx.lineTo(...point(i, 100));
+    ctx.strokeStyle = "#eef1f3";
+    ctx.stroke();
+  });
+  polygon(
+    metrics.map((item) =>
+      item.direction === "positive" ? item.goal : 100 - item.goal,
     ),
   );
-  context.append(facts, method);
-  bottom.append(drivers, context);
-  view["overview-content"].className = "";
-  view["overview-content"].replaceChildren(grid, bottom);
+  ctx.strokeStyle = "#929da7";
+  ctx.setLineDash([4, 4]);
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  polygon(metrics.map((item) => item.score ?? 0));
+  ctx.fillStyle = "rgba(171,35,58,.12)";
+  ctx.fill();
+  ctx.strokeStyle = "#a92d43";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  metrics.forEach((item, i) => {
+    const [x, y] = point(i, item.score ?? 0);
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#a92d43";
+    ctx.fill();
+    const [lx, ly] = point(i, 100);
+    ctx.font = '13px "Microsoft YaHei", system-ui, sans-serif';
+    ctx.fillStyle = "#65707a";
+    ctx.textAlign = i === 1 ? "left" : i === 3 ? "right" : "center";
+    ctx.textBaseline = i === 0 ? "bottom" : i === 2 ? "top" : "middle";
+    ctx.fillText(
+      item.name,
+      lx + (i === 1 ? 14 : i === 3 ? -14 : 0),
+      ly + (i === 0 ? -13 : i === 2 ? 13 : 0),
+    );
+  });
+}
+
+function openCalculation(metricId) {
+  const data = state.detail;
+  if (!data) return;
+  const dialog = byId("calculation-dialog");
+  const body = byId("calculation-content");
+  const footer = byId("calculation-actions");
+  byId("calculation-context").textContent =
+    data.city + " · " + data.industry + " · " + data.period;
+  body.replaceChildren();
+  footer.replaceChildren();
+  if (metricId) {
+    const item = data.metrics.find((metric) => metric.id === metricId);
+    const numeratorLabels = {
+      coverage: "稳定供应环节数",
+      local: "本地采购额",
+      cr5: "前五家供应商采购额",
+      leader: "链主营收",
+    };
+    const denominatorLabels = {
+      coverage: "关键环节总数",
+      local: "链主采购总额",
+      cr5: "采购总额",
+      leader: "链上营收总额",
+    };
+    byId("calculation-title").textContent = item.name + "如何计算";
+    if (item.value === null) {
+      body.append(
+        el("p", "当前分子或分母缺失，暂无有效计算结果。", "formula-note"),
+      );
+      if (!dialog.open) dialog.showModal();
+      return;
+    }
+    const raw = el("div", undefined, "formula-raw");
+    const ring = el("div", undefined, "formula-ring");
+    ring.style.setProperty("--share", (item.value ?? 0) + "%");
+    ring.setAttribute("aria-hidden", "true");
+    ring.append(el("strong", number(item.value) + "%"));
+    const formula = el("div", undefined, "formula-fraction");
+    formula.append(
+      el("span", numeratorLabels[metricId]),
+      el("span", denominatorLabels[metricId]),
+    );
+    const fraction = el("div", undefined, "formula-expression");
+    fraction.append(formula, el("span", "× 100%"));
+    const unit = metricId === "coverage" ? "个" : "亿元";
+    const rawText = el(
+      "p",
+      Number(item.numerator.toFixed(2)) +
+        " ÷ " +
+        Number(item.denominator.toFixed(2)) +
+        " × 100% = " +
+        number(item.value) +
+        "%",
+      "substitution",
+    );
+    const definition = el("div");
+    definition.append(
+      fraction,
+      rawText,
+      el("p", "数据单位为" + unit + "。", "formula-note"),
+    );
+    raw.append(ring, definition);
+    const steps = el("div", undefined, "formula-steps");
+    const scoring =
+      item.direction === "positive"
+        ? number(item.value) + " = " + number(item.score) + " 分"
+        : "100 − " + number(item.value) + " = " + number(item.score) + " 分";
+    for (const [label, value] of [
+      [item.direction === "positive" ? "正向计分" : "逆向计分", scoring],
+      [
+        "计入供应分",
+        number(item.score) +
+          " × " +
+          Math.round(item.weight * 100) +
+          "% = " +
+          number(item.contribution) +
+          " 分",
+      ],
+    ]) {
+      const step = el("div");
+      step.append(el("span", label), el("strong", value));
+      steps.append(step);
+    }
+    body.append(raw, el("p", item.note, "formula-note"), steps);
+    const back = el("button", "返回供应分", "quiet");
+    back.type = "button";
+    back.onclick = () => openCalculation();
+    const detail = el("button", "查看指标分析", "primary-button");
+    detail.type = "button";
+    detail.onclick = () => {
+      dialog.close();
+      showScreen("dimensions", metricId, true);
+    };
+    footer.append(back, detail);
+  } else {
+    byId("calculation-title").textContent = "供应分的计算过程";
+    body.append(
+      el("p", "四项指标折算为同一计分方向，再按权重相加。", "formula-note"),
+    );
+    const terms = el("div", undefined, "calculation-terms");
+    for (const item of data.metrics) {
+      const term = el("button", undefined, "calculation-term");
+      term.type = "button";
+      term.append(
+        el("span", item.name),
+        el(
+          "strong",
+          number(item.score) + " × " + Math.round(item.weight * 100) + "%",
+        ),
+        el("small", "贡献 " + number(item.contribution) + " 分"),
+      );
+      term.onclick = () => openCalculation(item.id);
+      terms.append(term);
+    }
+    const total = el("p", undefined, "calculation-total");
+    total.append(
+      el(
+        "span",
+        data.metrics.map((item) => number(item.contribution)).join(" ＋ ") +
+          " ＝ ",
+      ),
+      el("strong", number(data.index)),
+      el("small", " 分"),
+    );
+    body.append(
+      terms,
+      total,
+      el(
+        "p",
+        "按原始精度计算，展示时保留一位小数。点击指标可继续查看分子、分母及计分方向。",
+        "formula-note",
+      ),
+    );
+  }
+  if (!dialog.open) dialog.showModal();
 }
 
 function showScreen(screen, dimension = state.dimension, updateHash = false) {
@@ -334,7 +552,10 @@ function showDimension(key) {
   const detail = view["dimension-detail"];
   detail.hidden = false;
   const item = state.detail.metrics.find((metric) => metric.id === key);
-  const value = el("p", number(item.value) + "%", "metric-value");
+  const value = el("button", number(item.value) + "%", "metric-value");
+  value.type = "button";
+  value.setAttribute("aria-label", "查看" + item.name + "计算公式");
+  value.onclick = () => openCalculation(item.id);
   value.append(el("small", item.grade));
   const calculation = el("dl", undefined, "calculation-row");
   const ratio =
@@ -496,85 +717,47 @@ function renderTrade(trade, dimension) {
 }
 
 function renderSystem(data) {
-  const ev = data.evaluation;
   const root = byId("system-content");
-  const line = el(
-    "p",
-    "发展指数由物流、供应和韧性三项合成。差距分析用于安排改进任务。",
-    "muted",
-  );
-  const details = (title, value, body) => {
-    const panel = el("details", undefined, "research-row");
-    const head = el("summary");
-    head.append(el("strong", title), el("span", value), el("b", "＋"));
-    panel.append(head, el("p", body));
-    return panel;
-  };
-  const total = details(
-    "产业链发展指数",
-    number(ev.development) + " 分",
-    "物流 " +
-      number(ev.logistics) +
-      " × 30% ＋ 供应 " +
-      number(data.index) +
-      " × 40% ＋ 韧性 " +
-      number(ev.resilience) +
-      " × 30% ＝ " +
-      number(ev.development) +
-      " 分。",
-  );
-  const logistics = details(
-    "物流保障",
-    number(ev.logistics) + " 分 · 权重 30%",
-    "物流费用占产值 " +
-      number(ev.cost) +
-      "%，反向计分后占 40%。准时交付得分 " +
-      number(ev.ontime) +
-      "、运输安全得分 " +
-      number(ev.safety) +
-      "，各占 30%。",
-  );
-  const resilience = details(
-    "供应韧性",
-    number(ev.resilience) + " 分 · 权重 30%",
-    "本期 " +
-      ev.keyGoods +
-      " 个关键品类中，" +
-      ev.bottlenecks +
-      " 个存在供应瓶颈。韧性分 = 100 ×（1 − 瓶颈品类数 ÷ 关键品类数）。",
-  );
-  const gap = details(
-    "对标差距与改进",
-    "同业基准 " + number(ev.peerIndex) + " 分",
-    "同业发展指数基准 " +
-      number(ev.peerIndex) +
-      " 分，本市 " +
-      number(ev.development) +
-      " 分。链上增加值 " +
-      number(ev.addedValue) +
-      " 亿元，同业基准 " +
-      number(ev.peerValue) +
-      " 亿元，按基准计算差距率 " +
-      number(((ev.peerValue - ev.addedValue) / ev.peerValue) * 100) +
-      "%。",
-  );
-  const tasks = el("ol");
-  for (const item of [...data.metrics]
-    .sort((a, b) => b.gap * b.weight - a.gap * a.weight)
-    .filter((item) => item.gap > 0)) {
-    tasks.append(
-      el(
-        "li",
-        item.name +
-          "距优秀线 " +
-          number(item.gap) +
-          " 个百分点。" +
-          item.action,
-      ),
-    );
+  const assessment = data.assessment;
+  if (!assessment) {
+    root.replaceChildren(el("p", "当前数据尚不足以形成完整研判。", "muted"));
+    return;
   }
-  gap.append(tasks);
-  root.replaceChildren(line, total, logistics, resilience, gap);
+  const conclusion = el("article", undefined, "assessment-conclusion");
+  conclusion.append(
+    el("p", "本期结论", "section-kicker"),
+    el("h3", assessment.headline),
+    el("p", assessment.summary),
+  );
+  const evidence = el("div", undefined, "assessment-evidence");
+  for (const finding of assessment.findings) {
+    const article = el("article");
+    const title = el("button", finding.title, "evidence-title");
+    title.type = "button";
+    title.onclick = () => showScreen("dimensions", finding.dimension, true);
+    article.append(title, el("p", finding.text));
+    evidence.append(article);
+  }
+  const context = el("article", undefined, "assessment-context");
+  context.append(
+    el("h3", assessment.development.title),
+    el("p", assessment.development.text),
+  );
+  const actions = el("section", undefined, "assessment-actions");
+  actions.append(el("h3", "本期建议"));
+  const list = el("div", undefined, "assessment-action-list");
+  for (const action of assessment.actions) {
+    const article = el("article");
+    const heading = el("button", action.title, "text-link");
+    heading.type = "button";
+    heading.onclick = () => showScreen("dimensions", action.dimension, true);
+    article.append(heading, el("p", action.text));
+    list.append(article);
+  }
+  if (!assessment.actions.length)
+    list.append(el("p", "持续跟踪关键供应商交付与采购份额，巩固现有配套。"));
+  actions.append(list);
+  root.replaceChildren(conclusion, evidence, context, actions);
 }
 
 function connected(trace, selected) {
@@ -834,6 +1017,8 @@ async function loadTrace() {
 }
 
 async function loadCase() {
+  portraitObserver?.disconnect();
+  if (byId("calculation-dialog").open) byId("calculation-dialog").close();
   caseRequest?.abort();
   traceRequest?.abort();
   traceRequest = undefined;
@@ -894,6 +1079,8 @@ async function loadCase() {
 }
 
 function clearSelection() {
+  portraitObserver?.disconnect();
+  if (byId("calculation-dialog").open) byId("calculation-dialog").close();
   caseRequest?.abort();
   traceRequest?.abort();
   traceRequest = undefined;
@@ -1019,4 +1206,11 @@ document.querySelectorAll("[data-screen]").forEach((link) =>
   }),
 );
 window.addEventListener("hashchange", applyRoute);
+byId("calculation-close").addEventListener("click", () =>
+  byId("calculation-dialog").close(),
+);
+byId("calculation-dialog").addEventListener("click", (event) => {
+  if (event.target === byId("calculation-dialog"))
+    byId("calculation-dialog").close();
+});
 init();
