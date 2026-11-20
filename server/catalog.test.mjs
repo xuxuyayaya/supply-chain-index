@@ -73,3 +73,20 @@ test('public trace preserves part scope, disclosure denominators and unlocated n
   assert.equal(measured.year,2025);
   assert.match(measured.basis,/装车数量/);
 });
+
+test('city and industry metadata scopes each available assessment', () => {
+  const entries = listCases();
+  const cities = new Set(entries.map(item => item.cityId));
+  assert.equal(cities.size, 3);
+  for (const cityId of cities) {
+    const industries = entries.filter(item => item.cityId === cityId);
+    assert.equal(industries.length, 2);
+    assert.equal(new Set(industries.map(item => item.industryId)).size, 2);
+    for (const item of industries) {
+      const detail = getIndex(item.id);
+      assert.equal(detail.cityId, cityId);
+      assert.equal(detail.industry, item.industry);
+      assert.ok(detail.trace.nodes.some(node => node.city + '市' === item.city));
+    }
+  }
+});

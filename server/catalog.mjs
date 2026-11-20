@@ -2,7 +2,7 @@ import kaifengTrace from './kaifeng-trace.json' with { type: 'json' };
 
 const cases = [
   {
-    id: 'advanced-manufacturing',
+    id: 'advanced-manufacturing', cityId: 'suzhou', city: '苏州市', industryId: 'robot', industry: '工业机器人',
     name: '苏州 · 工业机器人',
     region: '江苏 · 苏州',
     description: '覆盖驱动、减速、控制及传感组件。',
@@ -18,7 +18,7 @@ const cases = [
     nodes: ['精密材料厂', '核心组件厂', '模组配套厂', '工业机器人整机厂']
   },
   {
-    id: 'energy-equipment',
+    id: 'energy-equipment', cityId: 'nanchang', city: '南昌市', industryId: 'storage', industry: '储能装备',
     name: '南昌 · 储能装备',
     region: '江西 · 南昌',
     description: '覆盖电池模组、功率转换、温控及结构件。',
@@ -34,7 +34,7 @@ const cases = [
     nodes: ['基材配套厂', '核心器件厂', '系统模组厂', '储能装备整机厂']
   },
   {
-    id: 'kaifeng-auto',
+    id: 'kaifeng-auto', cityId: 'kaifeng', city: '开封市', industryId: 'auto', industry: '汽车及零部件',
     name: '开封 · 汽车及零部件',
     region: '河南 · 开封',
     description: '覆盖整车装配、关键总成、零部件及上游材料。',
@@ -48,6 +48,46 @@ const cases = [
     nodes: ['材料配套厂', '汽车部件厂', '总成配套厂', '汽车整车厂']
   }
 ];
+
+const regionalIndustries = [
+  {
+    id: 'suzhou-storage', template: 'energy-equipment', cityId: 'suzhou', city: '苏州市',
+    industryId: 'storage', industry: '储能装备', name: '苏州 · 储能装备', region: '江苏 · 苏州',
+    periods: [
+      ['2026-10',16,18,23.6,16.8,4.2,[1.9,1.6,1.3,1,.8],.24],
+      ['2026-09',15,18,22.4,15.4,4,[2,1.7,1.4,1,.8],.26]
+    ],
+    context: {revenue:72, procurement:['电芯','变流器','温控系统','箱体','连接器'], months:[
+      [12,94,91,2,16,.05,8.6,9.4,84], [13,92,90,3,16,.06,8.2,9.2,83]
+    ]}
+  },
+  {
+    id: 'nanchang-robot', template: 'advanced-manufacturing', cityId: 'nanchang', city: '南昌市',
+    industryId: 'robot', industry: '工业机器人', name: '南昌 · 工业机器人', region: '江西 · 南昌',
+    periods: [
+      ['2026-10',17,22,12.8,7.8,2.2,[1.2,1,.9,.7,.6],.29],
+      ['2026-09',16,22,12.2,7.2,2,[1.2,1.1,.9,.8,.6],.31]
+    ],
+    context: {revenue:38, procurement:['伺服驱动','精密减速器','工业控制器','传感器','编码器'], months:[
+      [16,87,85,4,18,.07,4.8,5.6,81], [17,85,84,5,18,.08,4.5,5.5,80]
+    ]}
+  },
+  {
+    id: 'kaifeng-storage', template: 'energy-equipment', cityId: 'kaifeng', city: '开封市',
+    industryId: 'storage', industry: '储能装备', name: '开封 · 储能装备', region: '河南 · 开封',
+    periods: [
+      ['2026-10',13,18,9.6,5.8,1.4,[1.1,.9,.7,.5,.4],.34],
+      ['2026-09',12,18,9.2,5.3,1.3,[1.2,.9,.7,.6,.4],.36]
+    ],
+    context: {revenue:26, procurement:['电芯','变流器','温控系统','箱体','连接器'], months:[
+      [18,82,80,5,16,.05,3.1,4.2,80], [19,80,79,6,16,.06,2.9,4.1,79]
+    ]}
+  }
+];
+for (const {template, ...entry} of regionalIndustries) {
+  const base = cases.find(item => item.id === template);
+  cases.push({...base, ...entry, template});
+}
 
 const source = {
   label: '城市产业链月度测算',
@@ -79,8 +119,8 @@ const criteria = {
 };
 
 export function listCases() {
-  return cases.map(({ id, name, region, description, tags, periods }) => ({
-    id, name, region, description, tags, periods: periods.map(([period]) => period)
+  return cases.map(({ id, cityId, city, industryId, industry, name, region, description, tags, periods }) => ({
+    id, cityId, city, industryId, industry, name, region, description, tags, periods: periods.map(([period]) => period)
   }));
 }
 
@@ -99,7 +139,7 @@ export function getCase(id, period) {
   const row = entry?.periods.find(([name]) => name === period) ?? (period ? undefined : entry?.periods[0]);
   if (!entry || !row) return null;
   const [date, covered, stages, purchase, local, sales, rank, leader] = row;
-  const context = contexts[id];
+  const context = entry.context ?? contexts[id];
   const rowIndex = entry.periods.indexOf(row);
   const [cost, ontime, safety, bottlenecks, keyGoods, importRate, addedValue, peerValue, peerIndex] = context.months[rowIndex];
   const total = purchase + sales;
@@ -133,11 +173,11 @@ export function getCase(id, period) {
   })).sort((a, b) => b.amount - a.amount);
   return {
     ...listCases().find(item => item.id === id),
-    period: date, mode: 'modelled', version: '2.0', source, index, metrics,
+    period: date, mode: 'modelled', version: '3.0', source, index, metrics,
     evaluation: { previous: previous ? { period: previous.period, score: previous.index } : null,
       logistics, cost, ontime, safety, resilience, bottlenecks, keyGoods, development,
       addedValue, peerValue, peerIndex },
-    stages: stagesByCity[id].map((label,i) => ({ label, covered: i < covered })),
+    stages: stagesByCity[entry.template ?? id].map((label,i) => ({ label, covered: i < covered })),
     trade: {
       purchase, sales, total, categories, topFive,
       suppliers: rank.map((amount, i) => ({ label: context.procurement[i] + '供应商', amount, percent: amount / purchase * 100 })),
@@ -150,9 +190,9 @@ export function getCase(id, period) {
 
 // City-center GCJ-02 demonstration coordinates. No supplier facility is implied.
 const traceLocations = {
-  'advanced-manufacturing': [['南京',118.80,32.06],['无锡',120.31,31.49],['常州',119.97,31.81],['苏州',120.59,31.30],['杭州',120.15,30.28]],
-  'energy-equipment': [['宜春',114.39,27.80],['吉安',114.99,27.11],['新余',114.92,27.82],['南昌',115.86,28.68],['赣州',114.93,25.83]],
-  'kaifeng-auto': [['武汉',114.31,30.59],['芜湖',118.38,31.33],['郑州',113.63,34.75],['开封',114.31,34.80],['合肥',117.23,31.82]]
+  'suzhou': [['南京',118.80,32.06],['无锡',120.31,31.49],['常州',119.97,31.81],['苏州',120.59,31.30],['杭州',120.15,30.28]],
+  'nanchang': [['宜春',114.39,27.80],['吉安',114.99,27.11],['新余',114.92,27.82],['南昌',115.86,28.68],['赣州',114.93,25.83]],
+  'kaifeng': [['武汉',114.31,30.59],['芜湖',118.38,31.33],['郑州',113.63,34.75],['开封',114.31,34.80],['合肥',117.23,31.82]]
 };
 
 export function getIndex(id, period, partId) {
@@ -177,7 +217,7 @@ export function getTrace(id, partId) {
   }));
   nodes.push({ id: 'tier-1b', label: part[1] + ' · 备选组件厂', tier: 2, place: '跨区配套区' });
   nodes.forEach((node, i) => {
-    const [city, lng, lat] = traceLocations[id][i];
+    const [city, lng, lat] = traceLocations[entry.cityId][i];
     Object.assign(node, { city, position: [lng, lat] });
   });
   const edges = [
