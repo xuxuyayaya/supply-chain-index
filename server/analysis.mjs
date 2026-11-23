@@ -363,7 +363,7 @@ export function buildAnalysis(record, peers, history) {
     ? ev.development - previous.evaluation.development
     : null;
   const analysis = {
-    version: "5.0",
+    version: "5.1",
     development: {
       score: ev.development,
       components,

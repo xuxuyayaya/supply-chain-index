@@ -1,3 +1,4 @@
+import { renderResilience } from "./resilience-view.js";
 import { renderIndicatorWorkspace } from "./indicator-workspace.js";
 import { el, number } from "./ui.js";
 import { simulateDevelopment } from "./analysis-model.js";
@@ -253,97 +254,6 @@ function renderLogistics(data, actions) {
     metrics,
     indicators,
   );
-}
-
-function renderResilience(data, actions) {
-  const model = data.analysis.resilience;
-  const summary = el("div", undefined, "analysis-summary-row");
-  summary.append(
-    scoreLink("供应韧性分", model.score, () =>
-      actions.showMethod("resilience"),
-    ),
-    stat("关键品类", model.criticalCount + " 类"),
-    stat("瓶颈品类", model.bottleneckCount + " 类"),
-    stat(
-      "瓶颈占比",
-      number((model.bottleneckCount / model.criticalCount) * 100) + "%",
-    ),
-  );
-  const workspace = el("div", undefined, "risk-workspace");
-  const risks = panel("需要核验的风险线索");
-  risks.append(el("p", model.rule, "analysis-reading"));
-  const list = el("div", undefined, "risk-list");
-  const detail = panel("", "risk-detail");
-  const choose = (risk) => {
-    list
-      .querySelectorAll("button")
-      .forEach((node) =>
-        node.setAttribute(
-          "aria-pressed",
-          String(node.dataset.risk === risk.id),
-        ),
-      );
-    detail.replaceChildren(
-      el("p", "交叉核验", "section-kicker"),
-      el("h3", risk.label),
-      el("p", risk.finding, "analysis-reading"),
-    );
-    const observed = el("dl", undefined, "risk-observations");
-    for (const [label, value] of [
-      ["采购量回落", risk.purchaseDrop + "%"],
-      ["到货准时率", risk.arrivalRate + "%"],
-      ["主要来源占比", risk.regionShare + "%"],
-      ["已纳入备选的供方", risk.alternatives + " 家"],
-    ]) {
-      const pair = el("div");
-      pair.append(el("dt", label), el("dd", value));
-      observed.append(pair);
-    }
-    detail.append(
-      observed,
-      el("h4", "建议核查"),
-      el(
-        "p",
-        "联系" +
-          risk.supplier +
-          "核对订单与发运记录，并复核" +
-          risk.alternativeCity +
-          "的备选供方认证、产能与交期。",
-      ),
-      el("h4", "备用路径核查"),
-      el("p", risk.route.join(" → ")),
-    );
-    const controls = el("div", undefined, "analysis-actions");
-    controls.append(
-      button(
-        "查看供应链追溯",
-        () => actions.openTrace(risk.traceId),
-        "primary-button",
-      ),
-      button(
-        "查看相关改进事项",
-        () => actions.navigate("gap-actions"),
-        "quiet",
-      ),
-    );
-    detail.append(controls);
-  };
-  for (const risk of model.risks) {
-    const item = button("", () => choose(risk), "risk-item");
-    item.dataset.risk = risk.id;
-    item.append(el("strong", risk.label), el("span", risk.signals.join(" · ")));
-    list.append(item);
-  }
-  risks.append(list);
-  workspace.append(risks, detail);
-  if (model.risks.length) choose(model.risks[0]);
-  else
-    detail.append(
-      el("p", "本期未识别到瓶颈品类，继续跟踪关键原料和来源变化。"),
-    );
-  const indicators = el("div");
-  renderIndicatorWorkspace(indicators, data, "resilience", actions);
-  byId("resilience-content").replaceChildren(summary, workspace, indicators);
 }
 
 function renderGap(data, actions) {

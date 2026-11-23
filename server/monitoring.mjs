@@ -1,3 +1,4 @@
+import { assembleResilienceCategories } from "../frontend/resilience-model.js";
 const sum = (rows, key) => rows.reduce((total, row) => total + row[key], 0);
 const pct = (part, total) => (total ? (part / total) * 100 : 0);
 const round = (value, digits = 2) => Number(value.toFixed(digits));
@@ -533,6 +534,7 @@ export function buildMonitoring(record, model, goods) {
     regionalRisks,
     alerts,
   });
+  resilience.categories = assembleResilienceCategories(resilience);
   const shortages = sum(supplyGaps, "gap"),
     demand = sum(supplyGaps, "demand");
   add(
