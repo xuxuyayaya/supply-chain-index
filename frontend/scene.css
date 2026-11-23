@@ -3112,3 +3112,419 @@ button.trade-category-row:hover meter::-moz-meter-bar {
 .scene-nav {
   scroll-margin-top: 0;
 }
+/* Official identity and direct entry into each analysis view. */
+.official-logo {
+  display: block;
+  width: 148px;
+  height: auto;
+  object-fit: contain;
+}
+#back-intro {
+  display: none;
+  margin: 25px 0 18px;
+  font-size: 14px;
+}
+.analysis-mode .purpose-hero {
+  display: none;
+}
+.analysis-mode #back-intro {
+  display: inline-block;
+}
+.analysis-mode .selection-bar {
+  margin-top: 0;
+}
+.selection-required {
+  background: white;
+  padding: 32px;
+  border-radius: 14px;
+  margin: 26px 0;
+}
+.selection-required h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+}
+.selection-required p {
+  color: var(--muted);
+  font-size: 16px;
+}
+.context-required > section {
+  display: none !important;
+}
+.indicator-workspace {
+  margin-top: 34px;
+}
+.indicator-workspace-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: baseline;
+  margin: 0 0 22px;
+}
+.indicator-workspace-heading h3 {
+  font-size: 23px;
+}
+.indicator-workspace-heading > span {
+  color: var(--muted);
+  font-size: 14px;
+}
+.indicator-workspace-layout {
+  display: grid;
+  grid-template-columns: 235px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.indicator-selector {
+  display: grid;
+  gap: 7px;
+}
+.indicator-selector-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  background: white;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 18px;
+}
+.indicator-selector-item > span {
+  font-size: 14px;
+  font-weight: 550;
+}
+.indicator-selector-item small {
+  font-size: 12px;
+  color: #838b92;
+  white-space: nowrap;
+}
+.indicator-selector-item[aria-pressed="true"] {
+  background: #fbf0f3;
+  border-color: #d4a9b4;
+  color: var(--wine);
+}
+.indicator-detail {
+  background: white;
+  border-radius: 14px;
+  padding: 32px;
+  min-width: 0;
+}
+.indicator-detail-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.indicator-detail-heading h4 {
+  font-size: 25px;
+  margin: 0;
+}
+.indicator-scoring {
+  background: #fbf0f3;
+  padding: 4px 10px;
+  color: var(--red);
+  font-size: 12px;
+  border-radius: 5px;
+}
+.indicator-definition {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.9;
+  margin: 15px 0 22px;
+}
+.indicator-value {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: baseline;
+}
+.indicator-value strong {
+  font-size: 52px;
+  font-weight: 550;
+  letter-spacing: -0.04em;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+.indicator-value small {
+  font-size: 16px;
+  color: var(--muted);
+}
+.indicator-value > span {
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  color: var(--muted);
+}
+.indicator-reading {
+  font-size: 16px;
+  line-height: 1.95;
+  margin: 18px 0 22px;
+}
+.indicator-formula {
+  border: 1px solid #e7e9ec;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 24px 0;
+  font-size: 14px;
+  line-height: 1.95;
+}
+.indicator-formula summary {
+  color: var(--red);
+  font-size: 14px;
+}
+.indicator-formula p {
+  margin-top: 14px;
+}
+.indicator-substitution {
+  font-size: 16px;
+  color: #3c4b55;
+}
+.indicator-chart {
+  margin: 27px 0;
+}
+.indicator-chart figcaption {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.indicator-chart-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) minmax(140px, 2fr);
+  gap: 20px;
+  align-items: center;
+  margin: 18px 0;
+}
+.indicator-chart-row > span {
+  font-size: 14px;
+  line-height: 1.65;
+}
+.indicator-chart-values {
+  display: grid;
+  gap: 8px;
+}
+.indicator-chart-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px;
+  gap: 14px;
+  align-items: center;
+}
+.indicator-chart-line > span {
+  display: block;
+  height: 15px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f0f2f4;
+}
+.indicator-chart-line i {
+  display: block;
+  height: 100%;
+  background: #ae4a62;
+  border-radius: 4px;
+}
+.indicator-chart-line.previous i {
+  background: #95a7b4;
+}
+.indicator-chart-line strong {
+  font-size: 14px;
+  font-weight: 550;
+  text-align: right;
+}
+.indicator-data {
+  max-height: 430px;
+  overscroll-behavior: contain;
+}
+.indicator-data th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.indicator-next {
+  margin-top: 24px;
+}
+.indicator-mobile-select {
+  display: none;
+}
+/* City comparisons read as two complete portraits. */
+.city-versus-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
+  align-items: center;
+  margin: 28px 0;
+}
+.city-versus-card {
+  padding: 30px;
+  border-radius: 12px;
+  background: #faf4f6;
+  border-top: 4px solid #af5066;
+}
+.city-versus-card.peer {
+  background: #f2f5f7;
+  border-color: #8a9eac;
+}
+.city-versus-card h3 {
+  font-size: 31px;
+  font-weight: 600;
+  margin: 8px 0 9px;
+}
+.city-versus-context {
+  font-size: 14px;
+  color: var(--muted);
+}
+.city-versus-divider {
+  text-align: center;
+  font-size: 21px;
+  color: #939da5;
+  font-weight: 500;
+}
+.city-versus-total {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  margin: 28px 0 23px;
+}
+.city-versus-total > span {
+  width: 100%;
+  font-size: 14px;
+  color: var(--muted);
+}
+.city-versus-total strong {
+  font-size: 61px;
+  font-weight: 550;
+  color: var(--red);
+  letter-spacing: -0.04em;
+  line-height: 1.3;
+}
+.city-versus-card.peer .city-versus-total strong {
+  color: #536f83;
+}
+.city-versus-total small {
+  font-size: 13px;
+  color: var(--muted);
+}
+.city-versus-dimensions {
+  display: grid;
+  gap: 20px;
+  margin: 20px 0 28px;
+}
+.city-versus-dimensions > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  font-size: 14px;
+}
+.city-versus-dimensions strong {
+  font-weight: 550;
+  font-size: 17px;
+}
+.city-versus-dimensions meter {
+  grid-column: 1/-1;
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border: 0;
+  background: #e8dce1;
+  border-radius: 4px;
+}
+.city-versus-dimensions meter::-webkit-meter-bar {
+  height: 12px;
+  border: 0;
+  background: #e8dce1;
+  border-radius: 4px;
+}
+.city-versus-dimensions meter::-webkit-meter-optimum-value {
+  background: #b55a70;
+  border-radius: 4px;
+}
+.city-versus-card.peer meter::-webkit-meter-bar {
+  background: #e0e7ec;
+}
+.city-versus-card.peer meter::-webkit-meter-optimum-value {
+  background: #90a4b2;
+}
+.city-versus-verdict {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding: 22px 28px;
+  border-radius: 9px;
+  background: #f5f7f9;
+}
+.city-versus-card > .analysis-stat {
+  border-top: 1px solid #e0dce0;
+  padding-top: 22px;
+}
+@media (max-width: 850px) {
+  .indicator-workspace-layout {
+    grid-template-columns: 1fr;
+  }
+  .indicator-selector {
+    display: none;
+  }
+  .indicator-mobile-select {
+    display: block;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .city-versus-card {
+    padding: 23px;
+  }
+  .city-versus-card h3 {
+    font-size: 27px;
+  }
+}
+@media (max-width: 600px) {
+  .official-logo {
+    width: 122px;
+  }
+  .indicator-workspace-heading {
+    display: block;
+  }
+  .indicator-workspace-heading > span {
+    display: block;
+    margin-top: 10px;
+  }
+  .indicator-detail {
+    padding: 23px;
+  }
+  .indicator-chart-row {
+    grid-template-columns: 1fr;
+    gap: 9px;
+  }
+  .city-versus-stage {
+    grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1fr);
+  }
+  .city-versus-card {
+    padding: 18px 12px;
+  }
+  .city-versus-card h3 {
+    font-size: 24px;
+  }
+  .city-versus-total strong {
+    font-size: 44px;
+  }
+  .city-versus-context {
+    font-size: 12px;
+  }
+  .city-versus-divider {
+    font-size: 12px;
+  }
+  .city-versus-dimensions > div {
+    font-size: 12px;
+  }
+  .city-versus-dimensions strong {
+    font-size: 15px;
+  }
+  .city-versus-verdict {
+    padding: 20px;
+    gap: 16px;
+  }
+  .city-versus-verdict .analysis-stat strong {
+    font-size: 23px;
+  }
+  .city-versus-card .analysis-stat strong {
+    font-size: 22px;
+  }
+}

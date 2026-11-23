@@ -17,6 +17,9 @@ const files = new Map([
   ['/ui.js', ['ui.js', 'text/javascript;charset=utf-8']],
   ['/analysis-views.js', ['analysis-views.js', 'text/javascript;charset=utf-8']],
   ['/analysis-model.js', ['analysis-model.js', 'text/javascript;charset=utf-8']],
+  ['/unidata-logo-color.jpg', ['unidata-logo-color.jpg', 'image/jpeg']],
+  ['/unidata-logo-white.png', ['unidata-logo-white.png', 'image/png']],
+  ['/indicator-workspace.js', ['indicator-workspace.js', 'text/javascript;charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
 ]);
 

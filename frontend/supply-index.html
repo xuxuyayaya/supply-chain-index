@@ -12,9 +12,11 @@
     <header class="site-header">
       <div class="wrap header-row">
         <a class="brand" href="./" aria-label="全国物流网首页"
-          ><span class="brand-mark" aria-hidden="true"></span
-          ><span>数联科技<small>Unidata Tech</small></span></a
-        >
+          ><img
+            class="official-logo"
+            src="./unidata-logo-color.jpg"
+            alt="数联科技 Unidata Tech"
+        /></a>
         <span class="header-divider" aria-hidden="true"></span
         ><a href="./" class="platform-name">全国物流网</a>
         <nav aria-label="平台导航">
@@ -73,6 +75,9 @@
           <p>同类城市对比、改进清单、责任岗位与成效复算。</p></a
         >
       </section>
+      <button type="button" id="back-intro" class="text-link">
+        返回场景介绍
+      </button>
       <section
         id="evaluation-selection"
         class="selection-bar"
@@ -103,6 +108,10 @@
         <div id="city-shortcuts" class="city-shortcuts"></div>
       </div>
       <div id="workspace-content" hidden>
+        <div id="selection-required" hidden class="selection-required">
+          <h2 id="selection-required-title"></h2>
+          <p>请先选择城市，再选择产业链，查看该界面的完整分析。</p>
+        </div>
         <nav class="scene-nav" aria-label="四视图分析导航">
           <a href="#overview" data-screen="overview" aria-current="page"
             >发展总览</a
@@ -152,6 +161,8 @@
           <nav class="supply-nav" aria-label="供应分析下钻">
             <a href="#supply" data-screen="supply">配套能力</a
             ><a href="#dimensions" data-screen="dimensions">指标拆解</a
+            ><a href="#supply-indicators" data-screen="supply-indicators"
+              >全部指标 · 6项</a
             ><a href="#trade" data-screen="trade">采购结构</a
             ><a href="#trace" data-screen="trace">供应链追溯</a>
           </nav>
@@ -164,6 +175,9 @@
               <span id="report-city" class="context-label"></span>
             </div>
             <div id="overview-content" aria-live="polite"></div>
+          </section>
+          <section id="supply-indicators" hidden aria-label="供应分析全部指标">
+            <div id="supply-indicators-content"></div>
           </section>
           <section id="dimensions" aria-labelledby="dimension-title" hidden>
             <div class="section-top">

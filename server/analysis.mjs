@@ -1,3 +1,4 @@
+import { buildMonitoring } from "./monitoring.mjs";
 const round = (value) => Number(value.toFixed(1));
 const cityHubs = {
   kaifeng: ["开封经开区集货仓", "郑州国际陆港", "上海港"],
@@ -361,8 +362,8 @@ export function buildAnalysis(record, peers, history) {
   const change = previous
     ? ev.development - previous.evaluation.development
     : null;
-  return {
-    version: "4.0",
+  const analysis = {
+    version: "5.0",
     development: {
       score: ev.development,
       components,
@@ -477,4 +478,6 @@ export function buildAnalysis(record, peers, history) {
       })),
     },
   };
+  analysis.indicators = buildMonitoring(record, analysis, inputs.goods);
+  return analysis;
 }

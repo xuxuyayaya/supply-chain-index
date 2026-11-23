@@ -1,3 +1,4 @@
+import { renderIndicatorWorkspace } from "./indicator-workspace.js";
 import { el, number } from "./ui.js";
 import { simulateDevelopment } from "./analysis-model.js";
 
@@ -243,7 +244,15 @@ function renderLogistics(data, actions) {
       "text-link",
     ),
   );
-  byId("logistics-content").replaceChildren(summary, routes, grid, metrics);
+  const indicators = el("div");
+  renderIndicatorWorkspace(indicators, data, "logistics", actions);
+  byId("logistics-content").replaceChildren(
+    summary,
+    routes,
+    grid,
+    metrics,
+    indicators,
+  );
 }
 
 function renderResilience(data, actions) {
@@ -332,7 +341,9 @@ function renderResilience(data, actions) {
     detail.append(
       el("p", "本期未识别到瓶颈品类，继续跟踪关键原料和来源变化。"),
     );
-  byId("resilience-content").replaceChildren(summary, workspace);
+  const indicators = el("div");
+  renderIndicatorWorkspace(indicators, data, "resilience", actions);
+  byId("resilience-content").replaceChildren(summary, workspace, indicators);
 }
 
 function renderGap(data, actions) {
@@ -374,6 +385,7 @@ function renderGap(data, actions) {
   comparison.append(selectLabel);
   const comparisonBody = el("div");
   comparison.append(comparisonBody);
+  const gapIndicators = el("div");
   const showPeer = () => {
     const peer = model.peers.find((item) => item.id === peers.value);
     if (!peer) {
@@ -383,33 +395,60 @@ function renderGap(data, actions) {
       return;
     }
     const delta = peer.development - model.current.development;
-    const headline = el("div", undefined, "benchmark-headline");
-    headline.append(
-      stat(data.city, number(model.current.development) + " 分"),
-      stat(peer.city, number(peer.development) + " 分"),
+    const gdpGap =
+      ((peer.addedValue - model.current.addedValue) / peer.addedValue) * 100;
+    const stage = el("div", undefined, "city-versus-stage");
+    const cityCard = (city, role, tone) => {
+      const card = el("article", undefined, "city-versus-card " + tone);
+      card.append(
+        el("p", role, "section-kicker"),
+        el("h3", city.city),
+        el("p", city.industry + " · " + city.period, "city-versus-context"),
+      );
+      const total = el("div", undefined, "city-versus-total");
+      total.append(
+        el("span", "产业链发展指数"),
+        el("strong", number(city.development)),
+        el("small", "/ 100"),
+      );
+      card.append(total);
+      const dimensions = el("div", undefined, "city-versus-dimensions");
+      for (const component of data.analysis.development.components) {
+        const row = el("div");
+        const meter = el("meter");
+        meter.min = 0;
+        meter.max = 100;
+        meter.value = city[component.id];
+        meter.setAttribute("aria-label", city.city + component.name + "得分");
+        row.append(
+          el("span", component.name),
+          el("strong", number(city[component.id])),
+          meter,
+        );
+        dimensions.append(row);
+      }
+      card.append(
+        dimensions,
+        stat("产业链增加值", number(city.addedValue) + " 亿元"),
+      );
+      return card;
+    };
+    stage.append(
+      cityCard(model.current, "本市产业链", "current"),
+      el("span", "VS", "city-versus-divider"),
+      cityCard(peer, "对标产业链", "peer"),
+    );
+    const verdict = el("div", undefined, "city-versus-verdict");
+    verdict.append(
       stat(
-        delta >= 0 ? "距对标城市" : "高于对标城市",
+        delta >= 0 ? "发展指数差距" : "发展指数领先",
         number(Math.abs(delta)) + " 分",
       ),
+      stat(
+        gdpGap >= 0 ? "产业增加值差距率" : "产业增加值领先幅度",
+        number(Math.abs(gdpGap)) + "%",
+      ),
     );
-    const rows = el("div", undefined, "benchmark-bars");
-    for (const component of data.analysis.development.components) {
-      const item = el("div", undefined, "benchmark-row");
-      item.append(el("h4", component.name));
-      for (const [city, value, tone] of [
-        [data.city, model.current[component.id], "current"],
-        [peer.city, peer[component.id], "peer"],
-      ]) {
-        const row = el("div", undefined, "benchmark-bar " + tone);
-        const track = el("span");
-        const fill = el("i");
-        fill.style.width = value + "%";
-        track.append(fill);
-        row.append(el("span", city), track, el("strong", number(value)));
-        item.append(row);
-      }
-      rows.append(item);
-    }
     const gaps = data.analysis.development.components
       .map((item) => ({
         name: item.name,
@@ -420,19 +459,23 @@ function renderGap(data, actions) {
       "p",
       gaps[0].gap > 0
         ? gaps[0].name +
-            "差距最大，低于对标城市 " +
+            "差距最大，低于" +
+            peer.city +
+            " " +
             number(gaps[0].gap) +
-            " 分。可进入问题与行动，核查具体指标和改进事项。"
-        : "三个计分视图均达到或超过所选对标城市，继续关注关键环节与供应连续性。",
+            " 分。继续下钻指标，定位改进事项。"
+        : "三项分指数均达到或超过所选城市，继续跟踪关键环节与供应连续性。",
       "benchmark-reading",
     );
-    comparisonBody.replaceChildren(headline, rows, reading);
+    comparisonBody.replaceChildren(stage, verdict, reading);
+    renderIndicatorWorkspace(gapIndicators, data, "gap", actions, peer.id);
   };
   peers.onchange = showPeer;
   showPeer();
   sections.compare.append(
     comparison,
     button("定位问题并安排改进", () => showTab("actions"), "primary-button"),
+    gapIndicators,
   );
   const problemPanel = panel("指标差距形成的问题清单");
   const detail = panel("", "problem-detail");
@@ -459,6 +502,8 @@ function renderGap(data, actions) {
       el("p", problem.cause),
       el("h4", "建议措施"),
       el("p", problem.action),
+      el("h4", "验收口径"),
+      el("p", problem.acceptance),
       el(
         "p",
         "建议牵头 " + problem.owner + " · 计划期限 " + problem.deadline,
@@ -469,8 +514,9 @@ function renderGap(data, actions) {
   };
   problemPanel.append(
     table(
-      ["改进事项", "现状与目标", "建议牵头", "计划期限"],
+      ["优先级", "改进事项", "现状与目标", "建议牵头", "计划期限"],
       model.problems.map((problem) => [
+        problem.priority,
         problemButton(problem),
         problem.evidence,
         problem.owner,
@@ -599,4 +645,10 @@ export function renderAnalysis(data, actions) {
   renderLogistics(data, actions);
   renderResilience(data, actions);
   renderGap(data, actions);
+  renderIndicatorWorkspace(
+    byId("supply-indicators-content"),
+    data,
+    "supply",
+    actions,
+  );
 }
