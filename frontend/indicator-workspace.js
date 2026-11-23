@@ -87,14 +87,14 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
   }
   root.className = "indicator-workspace";
   const heading = el("div", undefined, "indicator-workspace-heading");
+  const scoringCount = metrics.filter((m) => m.scoring).length;
   heading.append(
     el("h3", labels[view] + "指标全景"),
     el(
       "span",
       metrics.length +
         " 项指标 · " +
-        metrics.filter((m) => m.scoring).length +
-        " 项参与总指数计分",
+        (scoringCount ? scoringCount + " 项参与总指数计分" : "对标与改进"),
     ),
   );
   const layout = el("div", undefined, "indicator-workspace-layout");
@@ -128,7 +128,10 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
       "indicator-value",
     );
     value.setAttribute("aria-label", "查看" + metric.name + "计算口径");
-    value.append(el("strong", number(metric.value)), el("small", metric.unit));
+    const displayValue = ["项", "类", "条", "批", "家"].includes(metric.unit)
+      ? String(Math.round(metric.value))
+      : number(metric.value);
+    value.append(el("strong", displayValue), el("small", metric.unit));
     if (metric.secondary) value.append(el("span", metric.secondary));
     const formula = el("details", undefined, "indicator-formula");
     formula.append(
