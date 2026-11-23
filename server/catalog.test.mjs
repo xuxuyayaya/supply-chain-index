@@ -80,8 +80,8 @@ test('city and industry metadata scopes each available assessment', () => {
   assert.equal(cities.size, 3);
   for (const cityId of cities) {
     const industries = entries.filter(item => item.cityId === cityId);
-    assert.equal(industries.length, 2);
-    assert.equal(new Set(industries.map(item => item.industryId)).size, 2);
+    assert.ok(industries.length >= 2);
+    assert.equal(new Set(industries.map(item => item.industryId)).size, industries.length);
     for (const item of industries) {
       const detail = getIndex(item.id);
       assert.equal(detail.cityId, cityId);

@@ -14,6 +14,9 @@ const files = new Map([
   ['/style.css', ['style.css', 'text/css;charset=utf-8']],
   ['/trace-map.js', ['trace-map.js', 'text/javascript;charset=utf-8']],
   ['/PRD.docx', ['../docs/PRD.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']],
+  ['/ui.js', ['ui.js', 'text/javascript;charset=utf-8']],
+  ['/analysis-views.js', ['analysis-views.js', 'text/javascript;charset=utf-8']],
+  ['/analysis-model.js', ['analysis-model.js', 'text/javascript;charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
 ]);
 

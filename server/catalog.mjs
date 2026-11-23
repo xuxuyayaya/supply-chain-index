@@ -1,3 +1,4 @@
+import { buildAnalysis } from './analysis.mjs';
 import { assessSupply } from './assessment.mjs';
 import kaifengTrace from './kaifeng-trace.json' with { type: 'json' };
 
@@ -51,6 +52,8 @@ const cases = [
 ];
 
 const regionalIndustries = [
+  { id:'suzhou-auto',template:'kaifeng-auto',cityId:'suzhou',city:'苏州市',industryId:'auto',industry:'汽车及零部件',name:'苏州 · 汽车及零部件',region:'江苏 · 苏州',periods:[['2026-10',18,20,35.6,24.9,5.4,[2.8,2.4,1.8,1.4,1.2],.26],['2026-09',17,20,34.2,23.1,5.1,[2.9,2.5,1.9,1.5,1.2],.28]],context:{revenue:92,procurement:['动力电池','线束总成','座椅总成','车身冲压件','车用钢材'],months:[[14,91,88,3,20,.05,11.5,12.4,85],[15,89,87,4,20,.06,11.1,12.2,84]]}},
+  { id:'nanchang-auto',template:'kaifeng-auto',cityId:'nanchang',city:'南昌市',industryId:'auto',industry:'汽车及零部件',name:'南昌 · 汽车及零部件',region:'江西 · 南昌',periods:[['2026-10',16,20,18.2,12.1,2.8,[1.8,1.4,1.1,.8,.6],.31],['2026-09',15,20,17.5,11.2,2.6,[1.9,1.5,1.1,.9,.7],.33]],context:{revenue:49,procurement:['动力电池','线束总成','座椅总成','车身冲压件','车用钢材'],months:[[17,86,83,6,20,.06,6.8,8.2,82],[18,84,82,7,20,.07,6.5,8,81]]}},
   {
     id: 'suzhou-storage', template: 'energy-equipment', cityId: 'suzhou', city: '苏州市',
     industryId: 'storage', industry: '储能装备', name: '苏州 · 储能装备', region: '江苏 · 苏州',
@@ -202,7 +205,10 @@ export function getIndex(id, period, partId) {
   if (!record) return null;
   const part = partId ?? record.traceParts[0]?.id;
   const trace = part ? getTrace(id, part) : null;
-  return part && !trace ? null : { ...record, trace };
+  if (part && !trace) return null;
+  const peers = listCases().filter(item=>item.industryId===record.industryId && item.id!==id).map(item=>getCase(item.id,record.period)).filter(Boolean);
+  const history = record.periods.filter(month=>month<=record.period).map(month=>getCase(id,month));
+  return { ...record, trace, analysis: buildAnalysis(record,peers,history) };
 }
 
 export function getTrace(id, partId) {
