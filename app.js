@@ -90,7 +90,7 @@ async function request(path, snapshot, signal) {
     return { data: await response.json(), cached: false };
   } catch (error) {
     if (!production || signal.aborted) throw error;
-    const response = await fetch("./data/" + snapshot + ".json?schema=5", {
+    const response = await fetch("./data/" + snapshot + ".json?schema=5.1", {
       signal,
     });
     if (!response.ok) throw error;
