@@ -441,6 +441,15 @@ function renderGap(data, actions) {
       metric.view === "supply" ? "dimensions" : metric.view,
       metric.id,
     );
+  const problemButton = (problem) => {
+    const link = button(
+      problem.title,
+      () => chooseProblem(problem),
+      "table-link",
+    );
+    link.dataset.problem = problem.id;
+    return link;
+  };
   const chooseProblem = (problem) => {
     detail.replaceChildren(
       el("p", "根因核验", "section-kicker"),
@@ -462,7 +471,7 @@ function renderGap(data, actions) {
     table(
       ["改进事项", "现状与目标", "建议牵头", "计划期限"],
       model.problems.map((problem) => [
-        button(problem.title, () => chooseProblem(problem), "table-link"),
+        problemButton(problem),
         problem.evidence,
         problem.owner,
         problem.deadline,

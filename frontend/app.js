@@ -490,7 +490,12 @@ function openCalculation(metricId) {
   if (!dialog.open) dialog.showModal();
 }
 
-function showScreen(screen, dimension = state.dimension, updateHash = false) {
+function showScreen(
+  screen,
+  dimension = state.dimension,
+  updateHash = false,
+  focusProblem = false,
+) {
   const gapTab = screen.startsWith("gap-") ? screen.slice(4) : null;
   const requested = screen;
   if (gapTab) screen = "gap";
@@ -522,12 +527,16 @@ function showScreen(screen, dimension = state.dimension, updateHash = false) {
     );
   if (!state.detail) return;
   if (gapTab) byId("gap-tab-" + gapTab)?.click();
+  if (gapTab === "actions" && focusProblem)
+    document.querySelector('[data-problem="' + dimension + '"]')?.click();
   if (screen === "dimensions") showDimension(state.dimension);
   if (screen === "trade") renderTrade(state.detail.trade, state.dimension);
   if (screen === "trace") {
     if (state.trace) renderGraph();
     else if (!traceRequest) loadTrace();
   } else graphObserver?.disconnect();
+  if (updateHash)
+    document.querySelector(".scene-nav").scrollIntoView({ block: "start" });
 }
 
 function applyRoute() {
@@ -949,7 +958,12 @@ function renderSystem(data) {
     heading.type = "button";
     heading.onclick = () =>
       action.route
-        ? showScreen(action.route, state.dimension, true)
+        ? showScreen(
+            action.route,
+            action.dimension || state.dimension,
+            true,
+            Boolean(action.dimension),
+          )
         : showScreen("dimensions", action.dimension, true);
     article.append(heading, el("p", action.text));
     list.append(article);
@@ -1274,7 +1288,7 @@ async function loadCase() {
     renderOverview(result.data);
     renderAnalysis(result.data, {
       navigate: (route, metricId) =>
-        showScreen(route, metricId || state.dimension, true),
+        showScreen(route, metricId || state.dimension, true, Boolean(metricId)),
       openTrace: openTracePart,
       showMethod: openDevelopmentMethod,
     });

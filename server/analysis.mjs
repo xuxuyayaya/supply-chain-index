@@ -265,7 +265,7 @@ export function buildAnalysis(record, peers, history) {
       regionShare,
       alternatives,
       traceId: inputs.traceIds[i] ?? null,
-      supplier: record.trade.suppliers[i % record.trade.suppliers.length].label,
+      supplier: label + "供应商",
       signals: [
         purchaseDrop >= 20 ? "采购回落" : "采购变化",
         arrivalRate < 85 ? "到货偏慢" : "到货待跟踪",
@@ -308,8 +308,17 @@ export function buildAnalysis(record, peers, history) {
       record.industryId === "auto"
         ? ["车用钢材", "车身冲压件", "动力电池", "其他零部件"][i]
         : record.trade.categories[i % record.trade.categories.length].label,
-    path: [city, hubs[1], hubs[0]],
-    mode: ["公路", "铁路", "水运", "公路"][i],
+    path: [
+      city,
+      i === 2 && record.cityId !== "kaifeng" ? hubs[2] : hubs[1],
+      hubs[0],
+    ],
+    mode: [
+      "公路",
+      "铁路",
+      record.cityId === "kaifeng" ? "铁公联运" : "水公联运",
+      "公路",
+    ][i],
     volume: inboundAmounts[i],
   }));
   const outbound = [
@@ -320,13 +329,21 @@ export function buildAnalysis(record, peers, history) {
     id: "out-" + i,
     direction: "成品发运",
     goods: record.industry + "成品",
-    path: [hubs[0], i === 0 ? hubs[2] : hubs[1], city],
-    mode: ["水运", "公路", "多式联运"][i],
+    path: [
+      hubs[0],
+      i === 0 && record.cityId !== "kaifeng" ? hubs[2] : hubs[1],
+      city,
+    ],
+    mode: [
+      record.cityId === "kaifeng" ? "铁公联运" : "水公联运",
+      "公路",
+      "铁公联运",
+    ][i],
     volume: outboundAmounts[i],
   }));
   const routes = [...inbound, ...outbound];
   let shareAllocated = 0;
-  const modes = ["公路", "铁路", "水运", "多式联运"].map((label, i) => {
+  const modes = ["公路", "铁路", "水公联运", "铁公联运"].map((label, i) => {
     const share =
       i === 3
         ? round(100 - shareAllocated)
@@ -452,14 +469,12 @@ export function buildAnalysis(record, peers, history) {
             .join("、") +
           "安排责任岗位和计划期限，再以同口径复算检查指标变化。",
       },
-      actions: problems
-        .slice(0, 3)
-        .map((item) => ({
-          title: item.title,
-          text: item.action,
-          route: "gap",
-          dimension: item.id,
-        })),
+      actions: problems.slice(0, 3).map((item) => ({
+        title: item.title,
+        text: item.action,
+        route: "gap-actions",
+        dimension: item.id,
+      })),
     },
   };
 }

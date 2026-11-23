@@ -3084,3 +3084,31 @@ button.trade-category-row:hover meter::-moz-meter-bar {
     text-align: right;
   }
 }
+/* Readable analysis labels and broader comparison bars. */
+.purpose-copy > p,
+.analysis-reading,
+.risk-detail > p:not(.section-kicker) {
+  font-size: 16px;
+}
+.view-directory p,
+.analysis-stat > span,
+.analysis-score-link small,
+.view-button,
+.analysis-table,
+.analysis-table th,
+.table-link,
+.risk-item span,
+.risk-observations dt,
+.logistics-nodes span,
+.analysis-metric-grid p,
+.benchmark-bar,
+.benchmark-bar strong {
+  font-size: 14px;
+}
+.benchmark-bar > span:nth-child(2),
+.benchmark-bar i {
+  height: 16px;
+}
+.scene-nav {
+  scroll-margin-top: 0;
+}
