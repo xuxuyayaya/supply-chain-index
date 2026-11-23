@@ -649,71 +649,183 @@ function showDimension(key) {
   detail.append(actions);
 }
 
-function bars(title, items, max) {
-  const panel = el("article", undefined, "panel");
-  panel.append(el("h3", title));
-  const rows = el("div", undefined, "bars");
-  for (const item of items) {
-    const row = el("div", undefined, "bar-row");
+function renderTradeOrigins(trade) {
+  const panel = el("article", undefined, "trade-origins trade-card");
+  panel.append(el("h3", "采购来源地"));
+  const figure = el("figure", undefined, "origins-figure");
+  const localShare =
+    trade.purchase > 0
+      ? (trade.origins[0].amount / trade.purchase) * 100
+      : null;
+  const donut = el("button", undefined, "origins-donut");
+  donut.type = "button";
+  donut.disabled = localShare === null;
+  donut.setAttribute(
+    "aria-label",
+    "本地配套率 " + number(localShare) + "%，查看计算公式",
+  );
+  donut.setAttribute("aria-haspopup", "dialog");
+  donut.onclick = () => openCalculation("local");
+  const colors = ["#ab3a50", "#c4a9b0", "#e2e7ec"];
+  let cursor = 0;
+  const segments = trade.origins.map((origin, i) => {
+    const start = cursor;
+    cursor += trade.purchase > 0 ? (origin.amount / trade.purchase) * 100 : 0;
+    return colors[i] + " " + start + "% " + cursor + "%";
+  });
+  donut.style.background =
+    trade.purchase > 0
+      ? "conic-gradient(" + segments.join(",") + ")"
+      : "#e2e7ec";
+  const center = el("span", undefined, "origins-center");
+  const value = el("strong", number(localShare));
+  value.append(el("small", "%"));
+  center.append(value, el("span", "本地配套"));
+  donut.append(center);
+  const legend = el("dl", undefined, "origins-legend");
+  for (const [i, origin] of trade.origins.entries()) {
+    const row = el("div");
+    const label = el("dt", origin.label);
+    label.style.setProperty("--origin-color", colors[i]);
+    const amount = el("dd", number(origin.amount));
+    amount.append(
+      el("small", "亿元"),
+      el(
+        "span",
+        trade.purchase > 0
+          ? number((origin.amount / trade.purchase) * 100) + "%"
+          : "—",
+      ),
+    );
+    row.append(label, amount);
+    legend.append(row);
+  }
+  figure.append(donut, legend);
+  panel.append(figure);
+  return panel;
+}
+
+function renderTradeCategories(trade) {
+  const panel = el("article", undefined, "trade-categories trade-card");
+  const heading = el("div", undefined, "trade-chart-heading");
+  heading.append(el("h3", "品类购销额"), el("span", "亿元"));
+  panel.append(heading);
+  const rows = el("div", undefined, "trade-category-chart");
+  const max = Math.max(1, ...trade.categories.map((item) => item.amount));
+  for (const item of trade.categories) {
+    const row = el(
+      item.traceId ? "button" : "div",
+      undefined,
+      "trade-category-row",
+    );
     if (item.traceId) {
-      const link = el("button", item.label);
-      link.type = "button";
-      link.addEventListener("click", () => {
+      row.type = "button";
+      row.setAttribute(
+        "aria-label",
+        item.label + " " + number(item.amount) + "亿元，查看供应关系",
+      );
+      row.onclick = () => {
         showScreen("trace", "coverage", true);
         view.part.value = item.traceId;
         loadTrace();
         byId("trace").scrollIntoView();
         view.part.focus({ preventScroll: true });
-      });
-      row.append(link);
-    } else {
-      const label = el("span", item.label);
-      if ("traceId" in item) label.title = "暂无对应追溯关系";
-      row.append(label);
+      };
     }
-    row.append(
-      el(
-        "span",
-        number(item.amount) +
-          (item.percent === undefined
-            ? ""
-            : " / " + number(item.percent) + "%"),
-      ),
-    );
-    const meter = el("meter");
-    meter.max = max || 1;
-    meter.value = item.amount;
-    meter.setAttribute("aria-label", item.label + "金额（亿元）");
-    row.append(meter);
+    const label = el("span", item.label, "trade-category-label");
+    const amount = el("strong", number(item.amount));
+    const bar = el("meter");
+    bar.max = max;
+    bar.value = item.amount;
+    bar.setAttribute("aria-label", item.label + "购销额（亿元）");
+    row.append(label, amount, bar);
     rows.append(row);
   }
   panel.append(rows);
   return panel;
 }
 
+function renderTradeSuppliers(trade) {
+  const panel = el("article", undefined, "trade-suppliers trade-card");
+  const summary = el("div", undefined, "supplier-summary");
+  summary.append(el("h3", "前五家供应商"));
+  const score = el("button", undefined, "supplier-concentration");
+  score.type = "button";
+  const share =
+    trade.purchase > 0 ? (trade.topFive / trade.purchase) * 100 : null;
+  score.setAttribute(
+    "aria-label",
+    "供应商集中度 " + number(share) + "%，查看计算公式",
+  );
+  score.setAttribute("aria-haspopup", "dialog");
+  score.onclick = () => openCalculation("cr5");
+  score.append(el("strong", number(share)), el("small", "%"));
+  summary.append(score, el("p", "占采购总额", "supplier-share-label"));
+  const total = el(
+    "p",
+    "合计采购 " + number(trade.topFive) + " 亿元",
+    "supplier-total",
+  );
+  const remainder = el(
+    "p",
+    "其余供应商 " + number(trade.purchase - trade.topFive) + " 亿元",
+    "supplier-remainder",
+  );
+  summary.append(total, remainder);
+  const figure = el("figure", undefined, "supplier-figure");
+  figure.append(el("figcaption", "采购额（亿元） · 占采购总额的比例"));
+  const graph = el("div", undefined, "supplier-graph");
+  const scale =
+    Math.ceil(Math.max(1, ...trade.suppliers.map((item) => item.amount)) * 2) /
+    2;
+  const axis = el("div", undefined, "supplier-axis");
+  axis.setAttribute("aria-hidden", "true");
+  for (const value of [scale, scale / 2, 0])
+    axis.append(el("span", number(value)));
+  const columns = el("div", undefined, "supplier-columns");
+  for (const item of trade.suppliers) {
+    const column = el("div", undefined, "supplier-column");
+    const plot = el("div", undefined, "supplier-bar-plot");
+    plot.style.setProperty("--bar-height", (item.amount / scale) * 150 + "px");
+    const reading = el("div", undefined, "supplier-reading");
+    reading.append(
+      el("strong", number(item.amount)),
+      el("span", number(item.percent) + "%"),
+    );
+    const bar = el("div", undefined, "supplier-bar");
+    bar.setAttribute("aria-hidden", "true");
+    plot.append(reading, bar);
+    column.append(plot, el("p", item.label));
+    columns.append(column);
+  }
+  graph.append(axis, columns);
+  figure.append(graph);
+  panel.append(summary, figure);
+  return panel;
+}
+
 function renderTrade(trade, dimension) {
-  const kpis = el("div", undefined, "trade-kpi");
+  const kpis = el("dl", undefined, "trade-kpi");
   for (const [label, value] of [
     ["采购额", trade.purchase],
     ["销售额", trade.sales],
     ["购销合计", trade.total],
   ]) {
-    const tile = el("article", undefined, "panel");
-    tile.append(
-      el("span", label, "muted"),
-      el("strong", number(value) + " 亿元"),
-    );
+    const tile = el("div", undefined, "trade-stat");
+    const amount = el("dd", number(value));
+    amount.append(el("small", "亿元"));
+    tile.append(el("dt", label), amount);
     kpis.append(tile);
   }
-  const grid = el("div", undefined, "trade-grid");
-  const summaries = [
-    bars("品类购销额（亿元）", trade.categories, trade.categories[0]?.amount),
-    bars("供应商采购额与占比", trade.suppliers, trade.suppliers[0]?.amount),
-    bars("采购来源地（亿元）", trade.origins, trade.purchase),
-  ];
-  for (const i of dimension === "cr5" ? [1, 0, 2] : [2, 0, 1])
-    grid.append(summaries[i]);
-  view["trade-content"].replaceChildren(kpis, grid);
+  const distribution = el("div", undefined, "trade-distribution");
+  distribution.append(renderTradeOrigins(trade), renderTradeCategories(trade));
+  const suppliers = renderTradeSuppliers(trade);
+  view["trade-content"].replaceChildren(
+    kpis,
+    ...(dimension === "cr5"
+      ? [suppliers, distribution]
+      : [distribution, suppliers]),
+  );
 }
 
 function renderSystem(data) {
@@ -1053,8 +1165,7 @@ async function loadCase() {
     state.detail = result.data;
     byId("workspace-content").hidden = false;
     byId("empty-state").hidden = true;
-    byId("selection-note").textContent =
-      result.data.city + " · " + result.data.industry;
+    byId("selection-note").textContent = "";
     const url = new URL(location.href);
     url.searchParams.set("city", result.data.cityId);
     url.searchParams.set("case", id);
