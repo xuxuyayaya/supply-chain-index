@@ -1,3 +1,5 @@
+import { el, number } from "./ui.js";
+import { renderAnalysis } from "./analysis-views.js";
 import { clearTraceMap, renderTraceMap, fitTraceMap } from "./trace-map.js";
 
 const byId = (id) => document.getElementById(id);
@@ -56,15 +58,7 @@ const dimensions = {
   },
 };
 let caseRequest, traceRequest, graphObserver, portraitObserver;
-const number = (value) => (value === null ? "—" : Number(value).toFixed(1));
 const tierLabel = (tier) => (tier === 0 ? "整机端" : "Tier " + tier);
-
-function el(tag, text, className) {
-  const node = document.createElement(tag);
-  if (text !== undefined) node.textContent = text;
-  if (className) node.className = className;
-  return node;
-}
 
 function options(select, values, chosen) {
   select.replaceChildren(
@@ -95,7 +89,9 @@ async function request(path, snapshot, signal) {
     return { data: await response.json(), cached: false };
   } catch (error) {
     if (!production || signal.aborted) throw error;
-    const response = await fetch("./data/" + snapshot + ".json", { signal });
+    const response = await fetch("./data/" + snapshot + ".json?schema=4", {
+      signal,
+    });
     if (!response.ok) throw error;
     return { data: await response.json(), cached: true };
   }
@@ -494,12 +490,31 @@ function openCalculation(metricId) {
   if (!dialog.open) dialog.showModal();
 }
 
-function showScreen(screen, dimension = state.dimension, updateHash = false) {
+function showScreen(
+  screen,
+  dimension = state.dimension,
+  updateHash = false,
+  focusProblem = false,
+) {
+  const gapTab = screen.startsWith("gap-") ? screen.slice(4) : null;
+  const requested = screen;
+  if (gapTab) screen = "gap";
+  if (screen === "system") screen = "overview";
   state.screen = screen;
   state.dimension = dimension || "coverage";
-  for (const name of ["overview", "dimensions", "trade", "trace", "system"])
-    byId(name).hidden = name !== screen;
-  document.querySelectorAll("[data-screen]").forEach((link) => {
+  const supplyScreens = ["supply", "dimensions", "trade", "trace"];
+  const outer = supplyScreens.includes(screen) ? "supply" : screen;
+  for (const name of ["overview", "logistics", "supply", "resilience", "gap"])
+    byId(name).hidden = name !== outer;
+  for (const name of ["supply-overview", "dimensions", "trade", "trace"])
+    byId(name).hidden =
+      name !== (screen === "supply" ? "supply-overview" : screen);
+  document.querySelectorAll(".scene-nav [data-screen]").forEach((link) => {
+    if (link.dataset.screen === outer)
+      link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
+  document.querySelectorAll(".supply-nav [data-screen]").forEach((link) => {
     if (link.dataset.screen === screen)
       link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
@@ -508,25 +523,101 @@ function showScreen(screen, dimension = state.dimension, updateHash = false) {
     history.replaceState(
       null,
       "",
-      "#" + (screen === "dimensions" ? state.dimension : screen),
+      "#" + (screen === "dimensions" ? state.dimension : requested),
     );
   if (!state.detail) return;
+  if (gapTab) byId("gap-tab-" + gapTab)?.click();
+  if (gapTab === "actions" && focusProblem)
+    document.querySelector('[data-problem="' + dimension + '"]')?.click();
   if (screen === "dimensions") showDimension(state.dimension);
   if (screen === "trade") renderTrade(state.detail.trade, state.dimension);
   if (screen === "trace") {
     if (state.trace) renderGraph();
     else if (!traceRequest) loadTrace();
   } else graphObserver?.disconnect();
+  if (updateHash)
+    document.querySelector(".scene-nav").scrollIntoView({ block: "start" });
 }
 
 function applyRoute() {
   const hash = location.hash.slice(1);
   if (Object.hasOwn(dimensions, hash)) return showScreen("dimensions", hash);
-  showScreen(
-    ["overview", "dimensions", "trade", "trace", "system"].includes(hash)
-      ? hash
-      : "overview",
+  const destinations = [
+    "overview",
+    "logistics",
+    "supply",
+    "resilience",
+    "gap",
+    "dimensions",
+    "trade",
+    "trace",
+    "system",
+    "gap-actions",
+    "gap-review",
+  ];
+  showScreen(destinations.includes(hash) ? hash : "overview");
+  if (hash === "system" && state.detail) byId("system").scrollIntoView();
+}
+
+function openTracePart(partId) {
+  if (!state.detail) return;
+  showScreen("trace", "coverage", true);
+  if (partId && [...view.part.options].some((item) => item.value === partId)) {
+    view.part.value = partId;
+    loadTrace();
+  }
+  byId("trace").scrollIntoView();
+}
+
+function openDevelopmentMethod(viewId) {
+  const data = state.detail;
+  if (!data?.analysis) return;
+  const dialog = byId("calculation-dialog");
+  byId("calculation-context").textContent =
+    data.city + " · " + data.industry + " · " + data.period;
+  byId("calculation-actions").replaceChildren();
+  const body = byId("calculation-content");
+  const components = data.analysis.development.components;
+  const terms = viewId
+    ? data.analysis.gap.metrics.filter((item) => item.view === viewId)
+    : components;
+  byId("calculation-title").textContent = viewId
+    ? components.find((item) => item.id === viewId).name + "如何计算"
+    : "产业链发展指数如何计算";
+  const values = el("div", undefined, "calculation-terms");
+  for (const term of terms) {
+    const row = el("div", undefined, "calculation-term");
+    row.append(
+      el("span", term.name),
+      el(
+        "strong",
+        number(term.score) + " × " + Math.round(term.weight * 100) + "%",
+      ),
+      el("small", "贡献 " + number(term.score * term.weight) + " 分"),
+    );
+    values.append(row);
+  }
+  const total = viewId
+    ? components.find((item) => item.id === viewId).score
+    : data.analysis.development.score;
+  const answer = el("p", undefined, "calculation-total");
+  answer.append(
+    el("span", "合计 "),
+    el("strong", number(total)),
+    el("small", " 分"),
   );
+  body.replaceChildren(
+    el(
+      "p",
+      viewId
+        ? "各项指标按同一计分方向标准化后合成。"
+        : "物流、供应、韧性按 30%、40%、30% 合成总指数。差距视图用于对标、改进和成效复算。",
+      "formula-note",
+    ),
+    values,
+    answer,
+  );
+  if (!dialog.open) dialog.showModal();
 }
 
 function showDimension(key) {
@@ -830,7 +921,7 @@ function renderTrade(trade, dimension) {
 
 function renderSystem(data) {
   const root = byId("system-content");
-  const assessment = data.assessment;
+  const assessment = data.analysis?.assessment ?? data.assessment;
   if (!assessment) {
     root.replaceChildren(el("p", "当前数据尚不足以形成完整研判。", "muted"));
     return;
@@ -846,7 +937,10 @@ function renderSystem(data) {
     const article = el("article");
     const title = el("button", finding.title, "evidence-title");
     title.type = "button";
-    title.onclick = () => showScreen("dimensions", finding.dimension, true);
+    title.onclick = () =>
+      finding.route
+        ? showScreen(finding.route, state.dimension, true)
+        : showScreen("dimensions", finding.dimension, true);
     article.append(title, el("p", finding.text));
     evidence.append(article);
   }
@@ -862,7 +956,15 @@ function renderSystem(data) {
     const article = el("article");
     const heading = el("button", action.title, "text-link");
     heading.type = "button";
-    heading.onclick = () => showScreen("dimensions", action.dimension, true);
+    heading.onclick = () =>
+      action.route
+        ? showScreen(
+            action.route,
+            action.dimension || state.dimension,
+            true,
+            Boolean(action.dimension),
+          )
+        : showScreen("dimensions", action.dimension, true);
     article.append(heading, el("p", action.text));
     list.append(article);
   }
@@ -1149,6 +1251,16 @@ async function loadCase() {
   view["overview-content"].textContent = "正在读取城市指标…";
   view["trade-content"].replaceChildren();
   byId("system-content").replaceChildren();
+  byId("development-content").replaceChildren(
+    el("p", "正在汇总物流、供应与韧性数据…", "loading"),
+  );
+  for (const id of [
+    "logistics-content",
+    "resilience-content",
+    "gap-content",
+    "mechanism-content",
+  ])
+    byId(id).replaceChildren();
   view["dimension-nav"].replaceChildren();
   view["dimension-detail"].hidden = true;
   view.graph.replaceChildren();
@@ -1172,7 +1284,14 @@ async function loadCase() {
     url.searchParams.set("period", period);
     history.replaceState(null, "", url);
     updateChannel(result.cached);
+    byId("view-directory").hidden = true;
     renderOverview(result.data);
+    renderAnalysis(result.data, {
+      navigate: (route, metricId) =>
+        showScreen(route, metricId || state.dimension, true, Boolean(metricId)),
+      openTrace: openTracePart,
+      showMethod: openDevelopmentMethod,
+    });
     renderSystem(result.data);
     const parts = result.data.traceParts.map((part) => [part.id, part.label]);
     if (id === "kaifeng-auto") parts.push(["all", "全品类 · 按层级查找"]);
@@ -1185,7 +1304,7 @@ async function loadCase() {
     view["trace-status"].textContent = "当前案例无法加载。";
     showScreen("overview");
     byId("selection-note").textContent = "评价加载失败";
-    errorBox(view["overview-content"], "评价加载失败。", loadCase);
+    errorBox(byId("development-content"), "评价加载失败。", loadCase);
   }
 }
 
@@ -1200,6 +1319,7 @@ function clearSelection() {
   state.detail = state.trace = state.selected = null;
   byId("workspace-content").hidden = true;
   byId("empty-state").hidden = false;
+  byId("view-directory").hidden = false;
 }
 
 function selectCity(cityId, preferredCase, preferredPeriod) {
@@ -1324,4 +1444,16 @@ byId("calculation-dialog").addEventListener("click", (event) => {
   if (event.target === byId("calculation-dialog"))
     byId("calculation-dialog").close();
 });
+document.querySelectorAll("[data-entry]").forEach((link) =>
+  link.addEventListener("click", (event) => {
+    if (!state.detail) {
+      event.preventDefault();
+      byId("evaluation-selection").scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      view.city.focus({ preventScroll: true });
+    }
+  }),
+);
 init();
