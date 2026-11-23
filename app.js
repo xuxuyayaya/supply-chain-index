@@ -35,6 +35,7 @@ const state = {
   selected: null,
   dimension: "coverage",
   screen: "overview",
+  entry: null,
 };
 const dimensions = {
   coverage: {
@@ -89,7 +90,7 @@ async function request(path, snapshot, signal) {
     return { data: await response.json(), cached: false };
   } catch (error) {
     if (!production || signal.aborted) throw error;
-    const response = await fetch("./data/" + snapshot + ".json?schema=4", {
+    const response = await fetch("./data/" + snapshot + ".json?schema=5", {
       signal,
     });
     if (!response.ok) throw error;
@@ -502,11 +503,23 @@ function showScreen(
   if (screen === "system") screen = "overview";
   state.screen = screen;
   state.dimension = dimension || "coverage";
-  const supplyScreens = ["supply", "dimensions", "trade", "trace"];
+  const supplyScreens = [
+    "supply",
+    "supply-indicators",
+    "dimensions",
+    "trade",
+    "trace",
+  ];
   const outer = supplyScreens.includes(screen) ? "supply" : screen;
   for (const name of ["overview", "logistics", "supply", "resilience", "gap"])
     byId(name).hidden = name !== outer;
-  for (const name of ["supply-overview", "dimensions", "trade", "trace"])
+  for (const name of [
+    "supply-overview",
+    "supply-indicators",
+    "dimensions",
+    "trade",
+    "trace",
+  ])
     byId(name).hidden =
       name !== (screen === "supply" ? "supply-overview" : screen);
   document.querySelectorAll(".scene-nav [data-screen]").forEach((link) => {
@@ -525,7 +538,25 @@ function showScreen(
       "",
       "#" + (screen === "dimensions" ? state.dimension : requested),
     );
-  if (!state.detail) return;
+  document.body.classList.add("analysis-mode");
+  byId("view-directory").hidden = true;
+  byId("workspace-content").hidden = false;
+  byId("empty-state").hidden = true;
+  byId("selection-required").hidden = Boolean(state.detail);
+  byId("workspace-content").classList.toggle("context-required", !state.detail);
+  if (!state.detail) {
+    state.entry = requested;
+    byId("selection-required-title").textContent = {
+      overview: "产业链发展总览",
+      logistics: "产业链物流分析",
+      supply: "产业链供应分析",
+      resilience: "产业链韧性分析",
+      gap: "产业链差距分析",
+    }[outer];
+    if (updateHash)
+      byId("evaluation-selection").scrollIntoView({ block: "start" });
+    return;
+  }
   if (gapTab) byId("gap-tab-" + gapTab)?.click();
   if (gapTab === "actions" && focusProblem)
     document.querySelector('[data-problem="' + dimension + '"]')?.click();
@@ -541,6 +572,8 @@ function showScreen(
 
 function applyRoute() {
   const hash = location.hash.slice(1);
+  if (hash === "intro") return showIntro();
+  if (hash === "evaluation-selection") return;
   if (Object.hasOwn(dimensions, hash)) return showScreen("dimensions", hash);
   const destinations = [
     "overview",
@@ -549,6 +582,7 @@ function applyRoute() {
     "resilience",
     "gap",
     "dimensions",
+    "supply-indicators",
     "trade",
     "trace",
     "system",
@@ -1323,8 +1357,10 @@ function clearSelection() {
 }
 
 function selectCity(cityId, preferredCase, preferredPeriod) {
+  if (state.detail && document.body.classList.contains("analysis-mode"))
+    state.entry = location.hash.slice(1) || state.screen;
   clearSelection();
-  if (!preferredCase) {
+  if (!preferredCase && !state.entry) {
     state.screen = "overview";
     state.dimension = "coverage";
   }
@@ -1352,11 +1388,12 @@ function selectCity(cityId, preferredCase, preferredPeriod) {
   const url = new URL(location.href);
   url.searchParams.delete("case");
   url.searchParams.delete("period");
-  if (!preferredCase) url.hash = "";
+  if (!preferredCase && !state.entry) url.hash = "";
   if (cityId) url.searchParams.set("city", cityId);
   else url.searchParams.delete("city");
   history.replaceState(null, "", url);
   if (view.case.value) configurePeriods(preferredPeriod);
+  else if (state.entry) showScreen(state.entry, state.dimension, true);
 }
 
 function configurePeriods(preferred) {
@@ -1403,6 +1440,21 @@ async function init() {
       (item) => item.id === query.get("case"),
     );
     const cityId = selected?.cityId || query.get("city");
+    const entryHash = location.hash.slice(1);
+    if (
+      [
+        "overview",
+        "logistics",
+        "supply",
+        "resilience",
+        "gap",
+        "trace",
+        "supply-indicators",
+        "gap-actions",
+        "gap-review",
+      ].includes(entryHash)
+    )
+      state.entry = entryHash;
     selectCity(
       cities.some(([id]) => id === cityId) ? cityId : "",
       selected?.id,
@@ -1444,16 +1496,21 @@ byId("calculation-dialog").addEventListener("click", (event) => {
   if (event.target === byId("calculation-dialog"))
     byId("calculation-dialog").close();
 });
+function showIntro() {
+  state.entry = null;
+  document.body.classList.remove("analysis-mode");
+  byId("workspace-content").hidden = true;
+  byId("view-directory").hidden = false;
+  byId("empty-state").hidden = Boolean(state.detail);
+  history.replaceState(null, "", "#intro");
+  document.querySelector(".purpose-hero").scrollIntoView({ block: "start" });
+}
+byId("back-intro").onclick = showIntro;
 document.querySelectorAll("[data-entry]").forEach((link) =>
   link.addEventListener("click", (event) => {
-    if (!state.detail) {
-      event.preventDefault();
-      byId("evaluation-selection").scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      view.city.focus({ preventScroll: true });
-    }
+    event.preventDefault();
+    state.entry = link.dataset.entry;
+    showScreen(state.entry, state.dimension, true);
   }),
 );
 init();
