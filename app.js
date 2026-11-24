@@ -1,13 +1,13 @@
-import { createRecordEditor } from "./record-editor.js";
+import { createRecordEditor } from "./record-editor.js?v=20261124-records";
 import { renderScoreTrend } from "./score-trend.js";
 import {
   developmentDomain,
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { el, number, recordButton, recordHeading } from "./ui.js";
-import { indicatorInputs } from "./record-schema.js";
-import { renderAnalysis } from "./analysis-views.js";
+import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
+import { indicatorInputs } from "./record-schema.js?v=20261124-records";
+import { renderAnalysis } from "./analysis-views.js?v=20261124-records";
 import { clearTraceMap, renderTraceMap, fitTraceMap } from "./trace-map.js";
 
 const byId = (id) => document.getElementById(id);
