@@ -67,7 +67,7 @@ function rowValues(category, lens) {
       region?.city ?? "—",
       region ? number(region.previous) + "%" : "—",
       region ? number(region.current) + "%" : "—",
-      region ? "+" + number(region.increase) + " 个百分点" : "—",
+      region ? (region.increase > 0 ? "+" : "") + number(region.increase) + " 个百分点" : "—",
       region
         ? category.regionAbnormal
           ? "集中度突升"
@@ -78,11 +78,8 @@ function rowValues(category, lens) {
     return [
       latest ? latest.level + "关注" : "无预警记录",
       latest
-        ? "采购下降 " +
-          latest.drop +
-          "%；来源份额 " +
-          latest.region.current +
-          "%"
+        ? "采购变化 " + number(-latest.drop) + "%" +
+          (latest.region ? "；来源份额 " + number(latest.region.current) + "%" : "")
         : "—",
       latest?.time ?? "—",
       latest?.status ?? "本期未触发预警",
@@ -193,8 +190,8 @@ function categoryDetail(category, actions) {
             alert.time +
             " · " +
             alert.status +
-            "；采购量下降 " +
-            alert.drop +
+            "；采购量变化 " +
+            number(-alert.drop) +
             "%，由" +
             alert.owner +
             "核验。",
@@ -209,7 +206,7 @@ function categoryDetail(category, actions) {
       el(
         "p",
         "备选来源 " +
-          observation.alternativeCity +
+          (observation.alternativeCity || "待核实") +
           " · 已纳入备选 " +
           observation.alternatives +
           " 家；核对认证、产能与交期。",
@@ -217,7 +214,7 @@ function categoryDetail(category, actions) {
       ),
       el(
         "p",
-        "备用路径：" + observation.route.join(" → "),
+        "备用路径：" + (observation.route.join(" → ") || "待核实"),
         "resilience-follow-up",
       ),
     );

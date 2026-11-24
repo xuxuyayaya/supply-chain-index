@@ -1,3 +1,4 @@
+import { createRecordEditor } from "./record-editor.js";
 import { renderScoreTrend } from "./score-trend.js";
 import {
   developmentDomain,
@@ -96,7 +97,7 @@ async function request(path, snapshot, signal) {
     return { data: await response.json(), cached: false };
   } catch (error) {
     if (!production || signal.aborted) throw error;
-    const response = await fetch("./data/" + snapshot + ".json?schema=5.2", {
+    const response = await fetch("./data/" + snapshot + ".json?schema=5.3", {
       signal,
     });
     if (!response.ok) throw error;
@@ -577,6 +578,14 @@ function showScreen(
       link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
+  const activeLink = document.querySelector('.scene-nav [aria-current="page"]');
+  const nav = document.querySelector(".scene-nav");
+  if (activeLink) {
+    const linkBounds = activeLink.getBoundingClientRect();
+    const navBounds = nav.getBoundingClientRect();
+    if (linkBounds.right > navBounds.right) nav.scrollLeft += linkBounds.right - navBounds.right;
+    if (linkBounds.left < navBounds.left) nav.scrollLeft += linkBounds.left - navBounds.left;
+  }
   if (updateHash)
     history.replaceState(
       null,
@@ -598,6 +607,10 @@ function showScreen(
       resilience: "产业链韧性分析",
       gap: "产业链差距分析",
     }[outer];
+    const purpose = byId(outer).querySelector(":scope > .section-top .scene-purpose");
+    document.querySelector('[data-purpose="selection"]').replaceChildren(
+      ...Array.from(purpose.children, item => item.cloneNode(true)),
+    );
     if (updateHash)
       byId("evaluation-selection").scrollIntoView({ block: "start" });
     return;
@@ -612,7 +625,6 @@ function showScreen(
     else if (!traceRequest) loadTrace();
   } else graphObserver?.disconnect();
   if (updateHash) {
-    const nav = document.querySelector(".scene-nav");
     window.scrollTo({
       top: Math.max(
         0,
@@ -971,7 +983,7 @@ function renderTradeSuppliers(trade) {
   for (const value of [scale, scale / 2, 0])
     axis.append(el("span", number(value)));
   const columns = el("div", undefined, "supplier-columns");
-  for (const item of trade.suppliers) {
+  for (const item of trade.suppliers.slice(0, 5)) {
     const column = el("div", undefined, "supplier-column");
     const plot = el("div", undefined, "supplier-bar-plot");
     plot.style.setProperty("--bar-height", (item.amount / scale) * 150 + "px");
@@ -1311,8 +1323,8 @@ async function loadTrace() {
   view["trace-status"].textContent = "正在读取供货关系…";
   try {
     const result = await request(
-      "cases/" + id + "/trace?part=" + part,
-      id + "-" + part,
+      "cases/" + id + "/trace?part=" + part + "&period=" + state.detail.period,
+      id + "-" + state.detail.period + "-" + part,
       req.signal,
     );
     if (req.signal.aborted) return;
@@ -1381,6 +1393,8 @@ async function loadCase() {
     url.searchParams.set("period", period);
     history.replaceState(null, "", url);
     updateChannel(result.cached);
+    if (result.data.mode === "edited" && !result.cached)
+      view["data-channel"].textContent = "数据通道：已载入 GitHub 保存的月度录入。";
     byId("view-directory").hidden = true;
     renderOverview(result.data);
     renderAnalysis(result.data, {
@@ -1576,4 +1590,27 @@ document.querySelectorAll("[data-entry]").forEach((link) =>
     showScreen(state.entry, state.dimension, true);
   }),
 );
+const editRecord = createRecordEditor(byId("record-dialog"), api, async () => {
+  const part = view.part.value;
+  const peer = byId("benchmark-city")?.value;
+  await loadCase();
+  if (state.screen === "trace" && part && [...view.part.options].some(item => item.value === part)) {
+    view.part.value = part;
+    await loadTrace();
+  }
+  const selector = byId("benchmark-city");
+  if (selector && peer && [...selector.options].some(item => item.value === peer)) {
+    selector.value = peer;
+    selector.dispatchEvent(new Event("change"));
+  }
+});
+document.querySelectorAll("[data-record]").forEach(button => {
+  button.onclick = () => {
+    if (!state.detail) return;
+    const group = button.dataset.record;
+    const part = state.detail.traceParts.some(item => item.id === view.part.value)
+      ? view.part.value : state.detail.traceParts[0]?.id;
+    if (group !== "trace" || part) editRecord(group, state.detail, part);
+  };
+});
 init();
