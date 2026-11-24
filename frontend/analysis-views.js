@@ -4,9 +4,9 @@ import {
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { renderResilience } from "./resilience-view.js";
-import { renderIndicatorWorkspace } from "./indicator-workspace.js";
-import { el, number, recordButton, recordHeading } from "./ui.js";
+import { renderResilience } from "./resilience-view.js?v=20261124-records";
+import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-records";
+import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { simulateDevelopment } from "./analysis-model.js";
 
 const byId = (id) => document.getElementById(id);

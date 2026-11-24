@@ -1,7 +1,7 @@
 import { renderScoreTrend } from "./score-trend.js";
 import { developmentDomain } from "./score-trend-model.js";
-import { el, number, recordButton, recordHeading } from "./ui.js";
-import { indicatorInputs } from "./record-schema.js";
+import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
+import { indicatorInputs } from "./record-schema.js?v=20261124-records";
 import {
   assembleResilienceCategories,
   selectResilienceCategories,

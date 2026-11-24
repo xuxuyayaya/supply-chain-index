@@ -1,5 +1,5 @@
-import { recordGroups, metricLabels } from "./record-schema.js";
-import { el } from "./ui.js";
+import { recordGroups, metricLabels } from "./record-schema.js?v=20261124-records";
+import { el } from "./ui.js?v=20261124-records";
 
 const valueText = (value, unit) => new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(value) + " " + unit;
 const repository = "https://github.com/xuxuyayaya/supply-chain-index";
