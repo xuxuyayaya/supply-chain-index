@@ -4,7 +4,7 @@ import { scenePages, mainRoutes, supplyRoutes, gapRoutes } from "../frontend/sce
 const frontend = new URL("../frontend/", import.meta.url);
 const templates = new URL("../templates/scene/", import.meta.url);
 const read = name => readFile(new URL(name + ".html", templates), "utf8");
-const revision = "20261124-chart-labels";
+const revision = "20261124-benchmark-workspace";
 
 const [layout, selection, notes, dialogs] = await Promise.all(
   ["layout", "selection", "notes", "dialogs"].map(read),
@@ -12,14 +12,15 @@ const [layout, selection, notes, dialogs] = await Promise.all(
 for (const [id, page] of Object.entries(scenePages)) {
   const root = "../".repeat(page.path.split("/").filter(Boolean).length);
   const section = page.section ?? id;
-  const links = (routes, type, label) => '<nav class="' + type + '" aria-label="' + label + '">' +
+  const links = (routes, type, label) => `<nav class="${type}" aria-label="${label}"${type === "gap-nav" ? ' id="benchmark-navigation"' : ""}>` +
     routes.map(route => {
       const entry = scenePages[route];
       const current = (type === "scene-nav" ? section : id) === route ? ' aria-current="page"' : "";
       const emphasis = route === "trace" ? ' class="supply-trace-entry"' : "";
       const arrow = route === "trace" ? ' <span aria-hidden="true">→</span>' : "";
       const title = type === "scene-nav" ? entry.tab ?? entry.title : entry.subtab;
-      return `<a href="${root + entry.path}" data-route="${route}"${current}${emphasis}>${title}${arrow}</a>`;
+      const purpose = type === "gap-nav" ? `<small aria-hidden="true">${entry.purpose}</small>` : "";
+      return `<a href="${root + entry.path}" data-route="${route}"${current}${emphasis}>${title}${arrow}${purpose}</a>`;
     }).join("\n") + "</nav>";
   const title = id === "intro" ? page.title : page.title + " · 产业链供应分析指数";
   const content = id === "intro" ? await read("intro") : await read(section === "gap" ? "gap" : id);

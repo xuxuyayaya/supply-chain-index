@@ -500,49 +500,95 @@ function renderComparison(data, actions) {
   );
 }
 
+const priorityTones = { 高: "high", 中: "medium", 低: "low" };
+function priorityBadge(priority, withLabel = false) {
+  const badge = el("span", priority ? priority + (withLabel ? "优先级" : "") : "—", "task-priority");
+  badge.dataset.level = priorityTones[priority] ?? "";
+  return badge;
+}
+
+const taskNumber = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 });
+
 function renderGapActions(data, actions) {
   const model = data.analysis.gap;
   const root = byId("gap-content");
-  const problemPanel = panel("");
+  const problemPanel = panel("", "problem-list");
   problemPanel.append(recordHeading(el("h3", "指标差距形成的问题清单"),
     recordButton("录入改进任务", () => actions.openRecord("gap", { panel: "tasks" }))));
   const detail = panel("", "problem-detail");
+  detail.id = "problem-detail";
+  detail.tabIndex = -1;
+  detail.setAttribute("aria-labelledby", "problem-title");
+  const problemLinks = new Map();
   const gotoMetric = (metric) =>
     actions.navigate(
       metric.view === "supply" ? "dimensions" : metric.view,
       metric.id,
     );
   const problemButton = (problem) => {
-    const link = button(
-      problem.title,
-      () => {
-        actions.setQuery("problem", problem.id);
-        chooseProblem(problem);
-      },
-      "table-link",
-    );
-    link.dataset.problem = problem.id;
+    const link = button(problem.title, () => {
+      actions.setQuery("problem", problem.id);
+      chooseProblem(problem);
+      detail.focus({ preventScroll: true });
+      detail.scrollIntoView({ block: "start" });
+    }, "table-link problem-link");
+    link.setAttribute("aria-controls", detail.id);
+    problemLinks.set(problem.id, link);
     return link;
   };
   const chooseProblem = (problem) => {
+    for (const [id, link] of problemLinks) {
+      link.setAttribute("aria-pressed", String(id === problem.id));
+    }
     detail.dataset.problem = problem.id;
+    const { metric } = problem;
+    const unit = metric.id === "safety" ? " 分" : "%";
+    const gapUnit = metric.id === "safety" ? " 分" : " 个百分点";
+    const gap = metric.direction === "positive" ? metric.goal - metric.value : metric.value - metric.goal;
+    const summary = el("div", undefined, "problem-summary");
+    const title = el("h3", problem.title);
+    title.id = "problem-title";
+    const context = el("div", undefined, "problem-context");
+    context.append(el("span", "根因核验"), priorityBadge(problem.priority, true));
+    const metrics = el("div", undefined, "problem-metrics");
+    const targetLabel = metric.direction === "positive" ? "目标值（至少）" : "目标值（至多）";
+    metrics.append(
+      stat("本期 · " + metric.name, taskNumber.format(metric.value) + unit),
+      stat(targetLabel, taskNumber.format(metric.goal) + unit),
+      stat("距目标", gap <= 0 ? "已达到" :
+        (metric.direction === "positive" ? "需提高 " : "需降低 ") + taskNumber.format(gap) + gapUnit),
+    );
+    summary.append(context, recordHeading(title, recordButton("编辑本任务", () =>
+      actions.openRecord("gap", { panel: "tasks", match: { id: problem.id }, field: "title" }))), metrics);
+
+    const steps = el("div", undefined, "problem-steps");
+    for (const [label, text] of [
+      ["待核验因素", problem.cause],
+      ["建议措施", problem.action],
+      ["验收口径", problem.acceptance],
+    ]) {
+      const step = el("section", undefined, "problem-step");
+      step.append(el("h4", label), el("p", text));
+      steps.append(step);
+    }
+
+    const footer = el("div", undefined, "problem-footer");
+    const ownership = el("dl", undefined, "problem-ownership");
+    for (const [label, value] of [["建议牵头", problem.owner], ["计划期限", problem.deadline]]) {
+      const field = el("div");
+      field.append(el("dt", label), el("dd", value));
+      ownership.append(field);
+    }
+    const links = el("div", undefined, "problem-links");
+    links.append(
+      button("查看关联分析", () => gotoMetric(metric), "view-button"),
+      button("测算改进成效", () => actions.navigate("gap-review", metric.id), "primary-button"),
+    );
+    footer.append(ownership, links);
     detail.replaceChildren(
-      el("p", "根因核验", "section-kicker"),
-      recordHeading(el("h3", problem.title), recordButton("编辑本任务", () =>
-        actions.openRecord("gap", { panel: "tasks", match: { id: problem.id }, field: "title" }))),
-      el("p", problem.evidence, "analysis-reading"),
-      el("h4", "需核验的因素"),
-      el("p", problem.cause),
-      el("h4", "建议措施"),
-      el("p", problem.action),
-      el("h4", "验收口径"),
-      el("p", problem.acceptance),
-      el(
-        "p",
-        "建议牵头 " + problem.owner + " · 计划期限 " + problem.deadline,
-        "problem-owner",
-      ),
-      button("查看关联分析", () => gotoMetric(problem.metric), "text-link"),
+      summary,
+      steps,
+      footer,
     );
   };
   problemPanel.append(
@@ -550,7 +596,7 @@ function renderGapActions(data, actions) {
       "本期改进事项明细 · " + data.period,
       ["优先级", "改进事项", "现状与目标", "建议牵头", "计划期限"],
       model.problems.map((problem) => [
-        problem.priority,
+        priorityBadge(problem.priority),
         problemButton(problem),
         problem.evidence,
         problem.owner,
@@ -560,16 +606,13 @@ function renderGapActions(data, actions) {
   );
   const requested = actions.query.get("problem");
   const selected = model.problems.find(problem => problem.id === requested) ?? model.problems[0];
-  if (selected) chooseProblem(selected);
-  else
-    detail.append(
-      el("p", "本期核心指标均达到目标，继续复核交付和供应连续性。"),
-    );
-  root.replaceChildren(
-    problemPanel,
-    detail,
-    button("目标测算与成效复算", () => actions.navigate("gap-review", selected?.id), "primary-button"),
-  );
+  root.replaceChildren(problemPanel);
+  if (selected) {
+    chooseProblem(selected);
+    root.append(detail);
+  } else {
+    problemPanel.append(el("p", "本期核心指标均达到目标，继续复核交付和供应连续性。", "analysis-reading"));
+  }
 }
 
 function renderGapReview(data, actions) {
