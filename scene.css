@@ -1315,81 +1315,201 @@ input {
   padding: 8px 17px;
   font-size: 14px;
 }
-/* The assessment explains what the evidence means and what to do next. */
+/* Findings, evidence and the next actions follow the same reading order. */
+#system {
+  scroll-margin-top: 76px;
+}
+#system-content {
+  --assessment-padding: clamp(19px, 3vw, 34px);
+  display: grid;
+  gap: 24px;
+}
+.assessment-conclusion,
+.assessment-dimension,
+.assessment-actions {
+  border: 1px solid var(--line);
+  border-radius: var(--card-radius);
+  background: #fff;
+}
 .assessment-conclusion {
-  padding: 33px 36px;
-  background: white;
-  border-radius: 12px;
+  padding: var(--assessment-padding);
+  border-left: 4px solid var(--wine);
 }
 .assessment-conclusion h3 {
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.6;
-  margin: 8px 0 14px;
+  margin: 6px 0 12px;
+  font-size: clamp(20px, 2.5vw, 29px);
+  font-weight: 700;
+  line-height: 1.45;
 }
-.assessment-conclusion > p:last-child {
-  font-size: 16px;
-  line-height: 1.95;
-  color: #59646d;
-  max-width: 65em;
+.assessment-month {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  color: #52606b;
+  font-size: 14px;
+}
+.assessment-month > span:last-child {
+  color: var(--ink);
+  font-weight: 600;
+}
+.assessment-dimensions > h3,
+.assessment-actions h3 {
+  margin: 0;
+  font-size: clamp(17px, 1.9vw, 22px);
 }
 .assessment-evidence {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 32px;
-  padding: 30px 10px;
-}
-.assessment-evidence article {
-  min-width: 0;
-}
-.evidence-title {
-  border: 0;
-  padding: 0;
-  background: none;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.8;
-  text-align: left;
-}
-.evidence-title:hover {
-  color: var(--red);
-}
-.assessment-evidence p,
-.assessment-context p,
-.assessment-action-list p {
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.95;
+  gap: clamp(10px, 1.3vw, 18px);
   margin-top: 11px;
 }
-.assessment-context {
-  padding: 23px 28px;
-  background: #edf1f4;
-  border-radius: 8px;
+.assessment-dimension {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: clamp(15px, 1.7vw, 23px);
 }
-.assessment-context h3 {
-  font-size: 17px;
+.assessment-dimension.priority {
+  border-color: #dcbac4;
+  background: #fcf4f7;
+}
+.assessment-card-heading,
+.assessment-actions-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px 12px;
+  flex-wrap: wrap;
+}
+.assessment-card-heading h4,
+.assessment-action-copy h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.assessment-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: #edf0f2;
+  color: #48545d;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.assessment-status.priority {
+  background: var(--wine);
+  color: white;
+}
+.assessment-status.risk {
+  color: #78440e;
+  background: #f8edda;
+}
+.assessment-status > span {
+  font-size: 1.18em;
+  line-height: 1;
+}
+.assessment-card-score {
+  display: flex;
+  align-self: flex-start;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1.1;
+  font-size: 14px;
+}
+.assessment-card-score strong {
+  font-size: clamp(28px, 3.5vw, 44px);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.assessment-card-score:hover strong,
+.assessment-dimension.priority .assessment-card-score strong {
+  color: var(--wine);
+}
+.assessment-fact {
+  margin: 0;
+  color: #53616c;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.assessment-target {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  margin-top: 2px;
+  padding-block-start: 8px;
+  border-top: 1px solid #d8dce080;
+  color: #46545e;
+  font-size: 13px;
+}
+.assessment-target strong {
+  flex-basis: 100%;
+  color: var(--ink);
+}
+.assessment-target-goal {
+  color: var(--wine);
+  font-weight: 650;
+}
+.assessment-view-link {
+  width: fit-content;
+  white-space: nowrap;
+}
+.assessment-dimension .assessment-view-link {
+  align-self: flex-start;
+  margin-top: auto;
 }
 .assessment-actions {
-  margin-top: 30px;
+  padding: var(--assessment-padding);
 }
-.assessment-actions > h3 {
-  font-size: 21px;
+.assessment-actions-heading > span,
+.assessment-action-meta > span {
+  color: #53616c;
+  font-size: 13px;
 }
 .assessment-action-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 32px;
-  margin-top: 18px;
+  margin: 12px 0 0;
+  padding-inline-start: 1.25rem;
 }
-.assessment-action-list article {
-  padding: 22px 24px;
-  background: white;
-  border-radius: 8px;
+.assessment-action-list li {
+  padding: 12px 0 12px 5px;
+  border-top: 1px solid var(--line);
 }
-.assessment-action-list .text-link {
-  font-size: 17px;
-  font-weight: 600;
+.assessment-action-list li::marker {
+  color: var(--wine);
+  font-weight: 700;
+}
+.assessment-action-copy h4 {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 9px;
+}
+.assessment-action-copy p {
+  margin: 3px 0 0;
+  color: #53616c;
+  font-size: 14px;
+}
+.assessment-action-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  margin-top: 4px;
+}
+@media (max-width: 700px) {
+  .assessment-evidence { grid-template-columns: 1fr; }
+  #system-content { gap: 18px; }
 }
 @media (max-width: 950px) {
   .portrait-body {
@@ -1404,12 +1524,6 @@ input {
   }
   .supply-portrait {
     padding: 24px;
-  }
-  .assessment-evidence {
-    gap: 20px;
-  }
-  .assessment-action-list {
-    gap: 16px;
   }
 }
 @media (max-width: 700px) {
@@ -1513,32 +1627,6 @@ input {
   .formula-steps strong {
     font-size: 18px;
   }
-  .assessment-conclusion {
-    padding: 25px;
-  }
-  .assessment-conclusion h3 {
-    font-size: 24px;
-  }
-  .assessment-conclusion > p:last-child {
-    font-size: 15px;
-  }
-  .assessment-evidence,
-  .assessment-action-list {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  .assessment-evidence {
-    padding: 25px 5px;
-  }
-  .assessment-context {
-    padding: 22px;
-  }
-  .assessment-action-list article {
-    padding: 21px;
-  }
-  .assessment-actions {
-    margin-top: 25px;
-  }
 }
 /* Shared spacing and surfaces. */
 .selection-bar {
@@ -1593,16 +1681,6 @@ input {
 }
 .portrait-body {
   gap: 46px;
-}
-.assessment-action-list article {
-  border-radius: 11px;
-  padding: 25px 28px;
-}
-.assessment-evidence {
-  padding-block: 33px;
-}
-.assessment-conclusion {
-  padding: 36px 40px;
 }
 .footer {
   padding-block: 27px;
@@ -2178,15 +2256,6 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   }
   .trace-layout {
     padding: 0 14px 14px;
-  }
-  .assessment-conclusion {
-    padding: 27px;
-  }
-  .assessment-evidence {
-    padding-block: 28px;
-  }
-  .assessment-action-list article {
-    padding: 23px;
   }
 }
 /* Development-quality scene and the four analysis views. */
