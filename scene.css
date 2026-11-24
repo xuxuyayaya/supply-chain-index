@@ -1650,7 +1650,6 @@ input {
 }
 .overview-grid,
 .supply-portrait,
-.assessment-conclusion,
 .trace-panel,
 .dimension-detail {
   border-radius: var(--card-radius);
