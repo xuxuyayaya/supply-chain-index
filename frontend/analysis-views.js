@@ -1,12 +1,12 @@
-import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-change-colors";
 import {
   developmentDomain,
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { renderResilience } from "./resilience-view.js?v=20261124-chart-labels";
-import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-task-priority";
-import { el, number, priorityBadge, recordButton, recordHeading } from "./ui.js?v=20261124-task-priority";
+import { renderResilience } from "./resilience-view.js?v=20261124-change-colors";
+import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-change-colors";
+import { changeBadge, el, number, priorityBadge, recordButton, recordHeading } from "./ui.js?v=20261124-change-colors";
 import { simulateDevelopment } from "./analysis-model.js";
 
 const byId = (id) => document.getElementById(id);
@@ -51,7 +51,9 @@ function table(title, headings, rows) {
 }
 function stat(label, value, note) {
   const node = el("div", undefined, "analysis-stat");
-  node.append(el("span", label), el("strong", value));
+  const amount = el("strong");
+  amount.append(value);
+  node.append(el("span", label), amount);
   if (note) node.append(el("small", note));
   return node;
 }
@@ -77,18 +79,9 @@ function renderDevelopment(data, actions) {
   const change = development.previous
     ? development.score - development.previous.score
     : null;
-  total.append(
-    el(
-      "p",
-      change === null
-        ? "首个评价月份"
-        : "较上期" +
-            (change >= 0 ? "提升 " : "下降 ") +
-            number(Math.abs(change)) +
-            " 分",
-      "development-change",
-    ),
-  );
+  const changeLine = el("p", change === null ? "首个评价月份" : "较上期 ", "development-change");
+  if (change !== null) changeLine.append(changeBadge(number(change) + " 分"));
+  total.append(changeLine);
   total.append(button("查看计算方法", () => actions.showMethod(), "text-link"));
   const components = el("div", undefined, "development-components");
   for (const component of development.components) {
@@ -174,18 +167,9 @@ function renderLogistics(data, actions) {
   const prior = data.analysis.development.history.find(
     (point) => point.period < data.period,
   );
-  current.append(
-    el(
-      "p",
-      prior
-        ? "较上月 " +
-            (model.score - prior.logistics >= 0 ? "+" : "") +
-            number(model.score - prior.logistics) +
-            " 分"
-        : "首个统计月份",
-      "score-trend-change",
-    ),
-  );
+  const changeLine = el("p", prior ? "较上期 " : "首个统计月份", "score-trend-change");
+  if (prior) changeLine.append(changeBadge(number(model.score - prior.logistics) + " 分"));
+  current.append(changeLine);
   const facts = el("div", undefined, "score-trend-facts");
   facts.append(
     stat("月度货流", number(model.volume) + " 万吨"),
@@ -440,14 +424,9 @@ function renderComparison(data, actions) {
     );
     const verdict = el("div", undefined, "city-versus-verdict");
     verdict.append(
-      stat(
-        delta >= 0 ? "发展指数差距" : "发展指数领先",
-        number(Math.abs(delta)) + " 分",
-      ),
-      stat(
-        gdpGap >= 0 ? "产业增加值差距率" : "产业增加值领先幅度",
-        number(Math.abs(gdpGap)) + "%",
-      ),
+      stat("发展指数差距", changeBadge(number(delta) + " 分")),
+      stat("产业增加值差距率", peer.addedValue > 0 ? changeBadge(number(gdpGap) + "%") : "—"),
+      el("p", "差距按对标值减本市值计算。正值表示本市低于对标，负值表示本市高于对标。", "city-versus-note"),
     );
     const gaps = data.analysis.development.components
       .map((item) => ({
@@ -646,12 +625,7 @@ function renderGapReview(data, actions) {
       result.replaceChildren(
         stat("本期发展指数", number(projection.current) + " 分"),
         stat("达到目标后", number(projection.projected) + " 分"),
-        stat(
-          "预计变化",
-          (projection.change >= 0 ? "+" : "") +
-            number(projection.change) +
-            " 分",
-        ),
+        stat("预计变化", changeBadge(number(projection.change) + " 分")),
       );
     } catch (error) {
       result.replaceChildren(el("p", error.message, "analysis-reading"));
@@ -693,13 +667,13 @@ function renderGapReview(data, actions) {
             "发展总指数",
             number(model.previous.development),
             number(model.current.development),
-            number(model.current.development - model.previous.development),
+            changeBadge(number(model.current.development - model.previous.development)),
           ],
           ...data.analysis.development.components.map((item) => [
             item.name,
             number(model.previous[item.id]),
             number(model.current[item.id]),
-            number(model.current[item.id] - model.previous[item.id]),
+            changeBadge(number(model.current[item.id] - model.previous[item.id])),
           ]),
         ],
       ),

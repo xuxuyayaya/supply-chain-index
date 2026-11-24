@@ -1,5 +1,5 @@
-import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
-import { el, number, priorityBadge, recordButton, recordHeading } from "./ui.js?v=20261124-task-priority";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-change-colors";
+import { changeBadge, el, number, priorityBadge, recordButton, recordHeading } from "./ui.js?v=20261124-change-colors";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
 
 const labels = {
@@ -25,6 +25,7 @@ const chartLabels = {
   "gdp-gap": ["本市与对标城市产业链增加值", "增加值", "亿元"],
 };
 const monthText = (year, month) => year + " 年 " + month + " 月";
+const changeColumns = new Set(["差值", "同比", "变化", "潜在提分"]);
 
 function chart(metric, period) {
   const labels = chartLabels[metric.id];
@@ -101,6 +102,7 @@ function detailTable(metric, period) {
     for (const [index, text] of row.entries()) {
       const cell = el("td");
       if (index === priorityColumn) cell.append(priorityBadge(text));
+      else if (changeColumns.has(metric.columns[index])) cell.append(changeBadge(String(text)));
       else cell.textContent = String(text);
       tr.append(cell);
     }
@@ -185,11 +187,18 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
     const displayValue = ["项", "类", "条", "批", "家"].includes(metric.unit)
       ? String(Math.round(metric.value))
       : number(metric.value);
-    value.setAttribute("aria-label", metric.name + " " + displayValue + " " + metric.unit + "，查看计算口径");
+    const signed = metric.id === "index-gap" || metric.id === "gdp-gap";
     const readingValue = el("span", undefined, "indicator-number");
-    readingValue.append(el("strong", displayValue), el("small", metric.unit));
+    const amount = el("strong");
+    amount.append(signed ? changeBadge(displayValue) : displayValue);
+    value.setAttribute("aria-label", metric.name + " " + amount.textContent + " " + metric.unit + "，查看计算口径");
+    readingValue.append(amount, el("small", metric.unit));
     value.append(readingValue);
-    if (metric.secondary) value.append(el("span", metric.secondary, "indicator-secondary"));
+    if (metric.secondary?.startsWith("同比 ")) {
+      const secondary = el("span", "同比 ", "indicator-secondary");
+      secondary.append(changeBadge(metric.secondary.slice("同比 ".length)));
+      value.append(secondary);
+    } else if (metric.secondary) value.append(el("span", metric.secondary, "indicator-secondary"));
     top.append(title, value);
     if (metric.scoring)
       formula.append(
@@ -210,7 +219,9 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
             " 分",
         ),
       );
-    const reading = el("p", metric.summary, "indicator-reading");
+    const reading = el("p", metric.id === "index-gap"
+      ? "差值＝对标得分－本市得分。正值表示本市低于对标，负值表示本市高于对标。"
+      : metric.summary, "indicator-reading");
     const entry = indicatorInputs[metric.id];
     const tools = entry ? recordHeading(formula, recordButton(entry.label, () => actions.openRecord(entry.group, entry))) : formula;
     if (entry) tools.classList.add("indicator-record-tools");

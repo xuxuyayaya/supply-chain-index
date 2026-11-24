@@ -1,4 +1,4 @@
-import { el, number } from "./ui.js";
+import { changeBadge, el, number } from "./ui.js?v=20261124-change-colors";
 import {
   scorePoints,
   scoreDomain,
@@ -124,12 +124,7 @@ export function renderScoreTrend(
     point.period.replace("-", "年") +
     "月，" +
     (point.score === null ? "暂无得分" : number(point.score) + "分") +
-    (point.change === null
-      ? ""
-      : "，较上月" +
-        (point.change >= 0 ? "提升" : "下降") +
-        number(Math.abs(point.change)) +
-        "分");
+    (point.change === null ? "" : "，较上月变化 " + number(point.change) + " 分");
   const activate = (index) => {
     selected = index;
     const point = points[index];
@@ -144,17 +139,11 @@ export function renderScoreTrend(
       el("span", monthLabel(point.period)),
       el("strong", value),
     );
-    if (!compact && point.change !== null)
-      caption.append(
-        el(
-          "small",
-          "环比 " +
-            (point.change >= 0 ? "+" : "") +
-            number(point.change) +
-            " 分",
-          point.change >= 0 ? "increase" : "decrease",
-        ),
-      );
+    if (!compact && point.change !== null) {
+      const change = el("small", "环比 ");
+      change.append(changeBadge(number(point.change) + " 分"));
+      caption.append(change);
+    }
     if (points.length === 1 && !compact)
       caption.append(el("small", "当前仅1个月记录"));
   };

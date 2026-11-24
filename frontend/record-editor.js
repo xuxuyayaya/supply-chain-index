@@ -1,5 +1,5 @@
 import { recordGroups, metricLabels } from "./record-schema.js?v=20261124-records";
-import { el } from "./ui.js?v=20261124-records";
+import { changeBadge, el } from "./ui.js?v=20261124-change-colors";
 
 const valueText = (value, unit) => new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 }).format(value) + " " + unit;
 const repository = "https://github.com/xuxuyayaya/supply-chain-index";
@@ -351,9 +351,12 @@ function drawPreview(target, { before, after }) {
   after.cards.forEach((item, i) => {
     const card = el("div");
     const prior = before.cards[i].value;
-    const range = Math.abs(prior - item.value) < 0.000001 ? valueText(item.value, item.unit)
-      : valueText(prior, item.unit) + " → " + valueText(item.value, item.unit);
+    const change = item.value - prior;
+    const changed = Math.abs(change) >= 0.000001;
+    const range = changed ? valueText(prior, item.unit) + " → " + valueText(item.value, item.unit)
+      : valueText(item.value, item.unit);
     card.append(el("span", item.label), el("strong", range));
+    if (changed) card.append(changeBadge(valueText(change, item.unit === "%" ? "个百分点" : item.unit)));
     cards.append(card);
   });
   const details = el("details");

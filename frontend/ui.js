@@ -15,6 +15,16 @@ export function priorityBadge(priority, withLabel = false) {
   return badge;
 }
 
+export function changeBadge(text) {
+  const value = Number.parseFloat(text.replaceAll(",", "").replace("−", "-"));
+  if (!Number.isFinite(value)) return el("span", text);
+  const display = value === 0 ? text.replace(/^[+−-]/, "") :
+    value > 0 && !text.startsWith("+") ? "+" + text : text;
+  const badge = el("span", display, "change-badge");
+  badge.dataset.sign = value > 0 ? "positive" : value < 0 ? "negative" : "neutral";
+  return badge;
+}
+
 export function recordButton(label, open, accessibleLabel = label) {
   const button = el("button", label, "record-link");
   button.type = "button";

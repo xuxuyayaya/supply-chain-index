@@ -1,13 +1,13 @@
-import { createRecordEditor } from "./record-editor.js?v=20261124-chart-labels";
-import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
+import { createRecordEditor } from "./record-editor.js?v=20261124-change-colors";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-change-colors";
 import {
   developmentDomain,
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
+import { changeBadge, el, number, recordButton, recordHeading } from "./ui.js?v=20261124-change-colors";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
-import { renderAnalysis } from "./analysis-views.js?v=20261124-task-priority";
+import { renderAnalysis } from "./analysis-views.js?v=20261124-change-colors";
 import { gapRoutes, sceneUrl, supplyMetrics } from "./scene-routes.js?v=20261124-pages";
 
 const byId = (id) => document.getElementById(id);
@@ -158,19 +158,9 @@ function renderOverview(data) {
   value.onclick = () => openCalculation();
   if (data.index !== null) value.append(el("small", "/ 100"));
   valueRow.append(value, el("span", band, "score-grade"));
-  score.append(
-    valueRow,
-    el(
-      "p",
-      delta === null
-        ? "首个统计期"
-        : "较上月" +
-            (delta >= 0 ? "提升 " : "下降 ") +
-            number(Math.abs(delta)) +
-            " 分",
-      "score-change",
-    ),
-  );
+  const changeLine = el("p", delta === null ? "首个统计期" : "较上期 ", "score-change");
+  if (delta !== null) changeLine.append(changeBadge(number(delta) + " 分"));
+  score.append(valueRow, changeLine);
   const missing = data.stages.filter((stage) => !stage.covered).length;
   score.append(
     el(
@@ -967,12 +957,11 @@ function renderSystem(data) {
   const quality = assessment.headline.split("，", 1)[0];
   const conclusion = el("article", undefined, "assessment-conclusion");
   const trend = development.previous ? development.score - development.previous.score : null;
-  const trendText = trend === null ? "首个评价月份" : Math.abs(trend) < 0.05
-    ? "与上月持平"
-    : "较上月" + (trend > 0 ? "提升 " : "下降 ") + number(Math.abs(trend)) + " 分";
   const reading = el("p", undefined, "assessment-month");
-  reading.append(el("span", data.city + " · " + data.industry + " · " + data.period),
-    el("span", "发展指数 " + number(development.score) + " 分 · " + trendText));
+  const trendLine = el("span", "发展指数 " + number(development.score) + " 分 · " +
+    (trend === null ? "首个评价月份" : "较上期 "));
+  if (trend !== null) trendLine.append(changeBadge(number(trend) + " 分"));
+  reading.append(el("span", data.city + " · " + data.industry + " · " + data.period), trendLine);
   conclusion.append(
     el("p", "本期结论", "section-kicker"),
     el("h3", priorityView

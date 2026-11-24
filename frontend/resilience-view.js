@@ -1,6 +1,6 @@
-import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-change-colors";
 import { developmentDomain } from "./score-trend-model.js";
-import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
+import { changeBadge, el, number, recordButton, recordHeading } from "./ui.js?v=20261124-change-colors";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
 import {
   assembleResilienceCategories,
@@ -68,23 +68,26 @@ function rowValues(category, lens) {
       region?.city ?? "—",
       region ? number(region.previous) + "%" : "—",
       region ? number(region.current) + "%" : "—",
-      region ? (region.increase > 0 ? "+" : "") + number(region.increase) + " 个百分点" : "—",
+      region ? changeBadge(number(region.increase) + " 个百分点") : "—",
       region
         ? category.regionAbnormal
           ? "集中度突升"
           : "继续跟踪"
         : "未收录集中突升记录",
     ];
-  if (lens === "chain-alert")
+  if (lens === "chain-alert") {
+    const evidence = el("span", latest ? "采购变化 " : "—");
+    if (latest) {
+      evidence.append(changeBadge(number(-latest.drop) + "%"));
+      if (latest.region) evidence.append("，来源份额 " + number(latest.region.current) + "%");
+    }
     return [
       latest ? latest.level + "关注" : "无预警记录",
-      latest
-        ? "采购变化 " + number(-latest.drop) + "%" +
-          (latest.region ? "；来源份额 " + number(latest.region.current) + "%" : "")
-        : "—",
+      evidence,
       latest?.time ?? "—",
       latest?.status ?? "本期未触发预警",
     ];
+  }
   if (lens === "bottleneck")
     return [
       s.gap > 0 ? "存在瓶颈" : "未见供货缺口",
@@ -168,40 +171,21 @@ function categoryDetail(category, actions, lens) {
   const regions = el("section");
   regions.append(el("h5", "来源地区"));
   if (category.regions.length)
-    for (const region of category.regions)
-      regions.append(
-        el(
-          "p",
-          region.city +
-            "：份额由 " +
-            number(region.previous) +
-            "% 变为 " +
-            number(region.current) +
-            "%，增加 " +
-            number(region.increase) +
-            " 个百分点。",
-        ),
-      );
+    for (const region of category.regions) {
+      const line = el("p", region.city + "：份额由 " + number(region.previous) + "% 变为 " +
+        number(region.current) + "%，变动 ");
+      line.append(changeBadge(number(region.increase) + " 个百分点"), "。");
+      regions.append(line);
+    }
   else regions.append(el("p", "本期未收录来源集中突升明细。"));
   const alerts = el("section");
   alerts.append(el("h5", "关联预警"));
   if (category.alerts.length) {
-    for (const alert of category.alerts)
-      alerts.append(
-        el(
-          "p",
-          alert.level +
-            "关注 · " +
-            alert.time +
-            " · " +
-            alert.status +
-            "；采购量变化 " +
-            number(-alert.drop) +
-            "%，由" +
-            alert.owner +
-            "核验。",
-        ),
-      );
+    for (const alert of category.alerts) {
+      const line = el("p", alert.level + "关注 · " + alert.time + " · " + alert.status + "，采购量变化 ");
+      line.append(changeBadge(number(-alert.drop) + "%"), "，由" + alert.owner + "核验。");
+      alerts.append(line);
+    }
     alerts.append(recordButton("更新核验状态", () => actions.openRecord("resilience", {
       panel: "review", field: "status", match: { label: category.label },
     })));
