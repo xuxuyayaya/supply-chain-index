@@ -9,7 +9,7 @@ test('all monthly development assessments reconcile to the eight scoring inputs'
   for (const entry of listCases()) for (const period of entry.periods) {
     const record = getIndex(entry.id, period);
     const model = record.analysis;
-    assert.equal(model.version, '5.1');
+    assert.equal(model.version, '5.2');
     assert.equal(model.gap.metrics.length, 8);
     near(model.gap.metrics.reduce((sum, m) => sum + m.weight * m.viewWeight, 0), 1);
     near(model.development.components.reduce((sum, m) => sum + m.weight * m.score, 0), model.development.score);
@@ -51,7 +51,7 @@ test('Kaifeng separates development total from supply and supports goal forecast
   for (const value of ['', 'invalid', -1, 101, Infinity])
     assert.throws(() => simulateDevelopment(record.analysis, 'bottleneck', value), RangeError);
   assert.throws(() => simulateDevelopment(record.analysis, 'unknown', 20), RangeError);
-  assert.equal(getIndex('kaifeng-auto', '2026-09').analysis.development.previous, null);
+  assert.equal(getIndex('kaifeng-auto', '2025-11').analysis.development.previous, null);
   assert.doesNotMatch(record.analysis.assessment.headline, /计算|加权/);
 });
 

@@ -194,7 +194,7 @@ function comparison(record) {
   };
 }
 
-export function buildAnalysis(record, peers, history) {
+export function buildAnalysis(record, peers, history, peerHistory = {}) {
   const ev = record.evaluation;
   const inputs = industryInputs[record.industryId];
   const hubs = cityHubs[record.cityId];
@@ -363,7 +363,7 @@ export function buildAnalysis(record, peers, history) {
     ? ev.development - previous.evaluation.development
     : null;
   const analysis = {
-    version: "5.1",
+    version: "5.2",
     development: {
       score: ev.development,
       components,
@@ -396,6 +396,7 @@ export function buildAnalysis(record, peers, history) {
       rule: "采购量回落、准时率低于85%或单一来源占比超过60%时形成核验线索，结合备选供方判断影响。",
     },
     gap: {
+      peerHistory,
       current: comparison(record),
       peers: peers
         .map(comparison)

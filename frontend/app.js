@@ -1,3 +1,9 @@
+import { renderScoreTrend } from "./score-trend.js";
+import {
+  developmentDomain,
+  scoreDomain,
+  scorePoints,
+} from "./score-trend-model.js";
 import { el, number } from "./ui.js";
 import { renderAnalysis } from "./analysis-views.js";
 import { clearTraceMap, renderTraceMap, fitTraceMap } from "./trace-map.js";
@@ -90,7 +96,7 @@ async function request(path, snapshot, signal) {
     return { data: await response.json(), cached: false };
   } catch (error) {
     if (!production || signal.aborted) throw error;
-    const response = await fetch("./data/" + snapshot + ".json?schema=5.1", {
+    const response = await fetch("./data/" + snapshot + ".json?schema=5.2", {
       signal,
     });
     if (!response.ok) throw error;
@@ -230,6 +236,14 @@ function renderOverview(data) {
   );
   visual.append(canvas, legend);
   const indicators = el("div", undefined, "portrait-metrics");
+  const metricDomain = scoreDomain(
+    data.metrics.map((metric) =>
+      scorePoints(data.analysis.development.history, "", {
+        metricId: metric.id,
+        endPeriod: data.period,
+      }),
+    ),
+  );
   for (const item of data.metrics) {
     const button = el("button", undefined, "portrait-metric");
     button.type = "button";
@@ -250,7 +264,20 @@ function renderOverview(data) {
       ),
     );
     button.onclick = () => openCalculation(item.id);
-    indicators.append(button);
+    const card = el("article", undefined, "portrait-metric-card");
+    card.append(
+      button,
+      el("p", "标准分月度走势", "portrait-trend-label"),
+      renderScoreTrend(data.analysis.development.history, "", {
+        metricId: item.id,
+        title: item.name + "标准分月度走势",
+        endPeriod: data.period,
+        compact: true,
+        domain: metricDomain,
+        heading: false,
+      }),
+    );
+    indicators.append(card);
   }
   portraitBody.append(visual, indicators);
   portrait.append(portraitHead, portraitBody);
@@ -265,8 +292,26 @@ function renderOverview(data) {
     fact.append(el("dt", label), value);
     facts.append(fact);
   }
+  grid.classList.add("supply-overview-grid");
+  score.classList.add("score-with-trend");
+  const scoreSummary = score.querySelector(".score-summary");
+  scoreSummary.remove();
+  const copy = el("div", undefined, "score-current-copy");
+  copy.append(...score.childNodes);
+  score.replaceChildren(
+    copy,
+    renderScoreTrend(data.analysis.development.history, "supply", {
+      title: "供应配套月度走势",
+      endPeriod: data.period,
+      domain: developmentDomain(data),
+    }),
+    scoreSummary,
+  );
+  grid.replaceChildren(score);
+  const lower = el("div", undefined, "supply-insight-row");
+  lower.append(insight, facts);
   view["overview-content"].className = "";
-  view["overview-content"].replaceChildren(grid, facts, portrait);
+  view["overview-content"].replaceChildren(grid, lower, portrait);
   portraitObserver?.disconnect();
   portraitObserver = new ResizeObserver(() =>
     drawSupplyRadar(canvas, data.metrics),
@@ -727,6 +772,13 @@ function showDimension(key) {
     calculation,
     el("p", item.note, "muted"),
     scale,
+  );
+  detail.append(
+    renderScoreTrend(state.detail.analysis.development.history, "", {
+      metricId: key,
+      title: "标准分月度走势",
+      endPeriod: state.detail.period,
+    }),
   );
   if (key === "coverage") {
     const stages = el("details", undefined, "stage-list");

@@ -525,7 +525,12 @@ export function buildMonitoring(record, model, goods) {
       level: risk.purchaseDrop >= 25 && regionalRisks[i].alert ? "高" : "中",
       status: "待核验",
       owner: "链主保供专班",
-      time: record.period + "-28 09:" + String(i * 7).padStart(2, "0"),
+      time:
+        record.period +
+        "-28 " +
+        String(9 + Math.floor((i * 7) / 60)).padStart(2, "0") +
+        ":" +
+        String((i * 7) % 60).padStart(2, "0"),
     }))
     .filter((row) => row.drop >= 20 || row.region.alert);
   Object.assign(resilience, {

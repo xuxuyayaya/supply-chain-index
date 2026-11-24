@@ -101,7 +101,8 @@ test('assessment explains the current city and prioritizes supported improvement
   assert.match(data.assessment.development.text, /距同业测算基准 4.0 分/);
   assert.doesNotMatch(JSON.stringify(data.assessment), /×|加权|计分|＝/);
   const older = getIndex('kaifeng-auto', '2026-09').assessment;
-  assert.match(older.summary, /首个评价月份/);
+  assert.match(getIndex('kaifeng-auto', '2025-11').assessment.summary, /首个评价月份/);
+  assert.ok(getIndex('kaifeng-auto', '2026-09').analysis.development.previous);
   assert.match(older.findings[0].title, /4 个/);
   const changed = getIndex('suzhou-storage').assessment;
   assert.equal(changed.actions[0].dimension, 'local');

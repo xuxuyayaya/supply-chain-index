@@ -1,3 +1,4 @@
+import { renderScoreTrend } from "./score-trend.js";
 import { el, number } from "./ui.js";
 
 const labels = {
@@ -166,6 +167,14 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
       reading,
       formula,
     );
+    if (metric.scoring)
+      detail.append(
+        renderScoreTrend(data.analysis.development.history, "", {
+          metricId: metric.coreId ?? metric.id,
+          title: "标准分月度走势",
+          endPeriod: data.period,
+        }),
+      );
     const plot = chart(metric);
     if (plot) detail.append(plot);
     detail.append(detailTable(metric));

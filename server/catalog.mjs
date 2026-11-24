@@ -1,3 +1,4 @@
+import { extendMonthlyHistory } from "./monthly-history.mjs";
 import { buildAnalysis } from './analysis.mjs';
 import { assessSupply } from './assessment.mjs';
 import kaifengTrace from './kaifeng-trace.json' with { type: 'json' };
@@ -110,6 +111,8 @@ const contexts = {
     [18,80,78,5,20,.06,8.1,9.2,82], [19,78,77,6,20,.07,7.8,9.0,81]
   ] }
 };
+for (const entry of cases) extendMonthlyHistory(entry, entry.context ?? contexts[entry.id]);
+
 const stagesByCity = {
   'kaifeng-auto': ['整车装配','冲压成形','车身焊接','涂装','发动机装配','车桥装配','线束加工','座椅装配','内外饰注塑','燃油箱成形','排气总成','电池集成','热管理','制动系统','轮胎配套','玻璃加工','模具维护','车规级芯片供给','高性能功能膜供应','精密轴承制造'],
   'advanced-manufacturing': ['本体装配','结构件铸造','机身加工','关节装配','电机绕组','电机装配','驱动器集成','控制柜','控制软件','工业总线','视觉检测','编码器集成','线缆加工','末端执行器','动力配线','精密齿轮','散热装配','安全控制','传感标定','谐波柔轮制造','力矩芯片供给','高精轴承制造'],
@@ -208,7 +211,8 @@ export function getIndex(id, period, partId) {
   if (part && !trace) return null;
   const peers = listCases().filter(item=>item.industryId===record.industryId && item.id!==id).map(item=>getCase(item.id,record.period)).filter(Boolean);
   const history = record.periods.filter(month=>month<=record.period).map(month=>getCase(id,month));
-  return { ...record, trace, analysis: buildAnalysis(record,peers,history) };
+  const peerHistory = Object.fromEntries(peers.map(peer=>[peer.id, peer.periods.filter(month=>month<=record.period).map(month=>{const item=getCase(peer.id,month);return {period:item.period,development:item.evaluation.development,logistics:item.evaluation.logistics,supply:item.index,resilience:item.evaluation.resilience};})]));
+  return { ...record, trace, analysis: buildAnalysis(record,peers,history,peerHistory) };
 }
 
 export function getTrace(id, partId) {

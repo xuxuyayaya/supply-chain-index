@@ -19,6 +19,8 @@ const files = new Map([
   ['/analysis-model.js', ['analysis-model.js', 'text/javascript;charset=utf-8']],
   ['/unidata-logo-color.jpg', ['unidata-logo-color.jpg', 'image/jpeg']],
   ['/unidata-logo-white.png', ['unidata-logo-white.png', 'image/png']],
+  ['/score-trend-model.js', ['score-trend-model.js', 'text/javascript;charset=utf-8']],
+  ['/score-trend.js', ['score-trend.js', 'text/javascript;charset=utf-8']],
   ['/resilience-model.js', ['resilience-model.js', 'text/javascript;charset=utf-8']],
   ['/resilience-view.js', ['resilience-view.js', 'text/javascript;charset=utf-8']],
   ['/indicator-workspace.js', ['indicator-workspace.js', 'text/javascript;charset=utf-8']],
