@@ -265,32 +265,27 @@ function renderLogistics(data, actions) {
   }
   nodes.append(path);
   grid.append(modes, nodes);
-  const metrics = panel("交付保障的三个方面");
-  const metricGrid = el("div", undefined, "analysis-metric-grid");
-  for (const item of model.metrics) {
-    const card = el("article");
-    card.append(
-      el("h4", item.name),
-      el("strong", number(item.value) + (item.id === "safety" ? " 分" : "%")),
-      el("p", item.action),
-    );
-    metricGrid.append(card);
-  }
-  metrics.append(
-    metricGrid,
-    button(
-      "查看相关改进事项",
-      () => actions.navigate("gap-actions"),
-      "text-link",
-    ),
-  );
   const indicators = el("div");
+  indicators.id = "logistics-indicators";
   renderIndicatorWorkspace(indicators, data, "logistics", actions);
+  const indicatorCount = data.analysis.indicators.filter(item => item.view === "logistics").length;
+  const viewIndicators = button(
+    "查看 " + indicatorCount + " 项指标",
+    () => {
+      indicators.scrollIntoView({ block: "start" });
+      const selector = indicators.querySelector(".indicator-selector");
+      const control = selector.getClientRects().length
+        ? selector.querySelector('[aria-pressed="true"]')
+        : indicators.querySelector("select");
+      control?.focus({ preventScroll: true });
+    },
+    "text-link indicator-section-link",
+  );
+  current.append(viewIndicators);
   byId("logistics-content").replaceChildren(
     summary,
     routes,
     grid,
-    metrics,
     indicators,
   );
 }
