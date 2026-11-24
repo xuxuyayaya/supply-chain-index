@@ -178,7 +178,7 @@ export async function renderTraceMap({ api, container, status, graph, nodes, edg
 async function drawCityOverview(container, nodes, edges, selected, onSelect, current) {
   const located = nodes.filter(node => node.position);
   if (!located.length) return false;
-  if (!outlines) outlines = fetch('./regions.json').then(response => response.ok ? response.json() : []).catch(() => []);
+  if (!outlines) outlines = fetch(new URL('./regions.json', import.meta.url)).then(response => response.ok ? response.json() : []).catch(() => []);
   const boundaries = await outlines;
   if (current !== revision) return false;
   container.hidden = false;

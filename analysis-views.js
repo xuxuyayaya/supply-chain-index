@@ -4,7 +4,7 @@ import {
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { renderResilience } from "./resilience-view.js?v=20261124-records";
+import { renderResilience } from "./resilience-view.js?v=20261124-pages";
 import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-records";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { simulateDevelopment } from "./analysis-model.js";
@@ -62,8 +62,6 @@ function scoreLink(label, value, click) {
 
 function renderDevelopment(data, actions) {
   const { development, gap } = data.analysis;
-  byId("development-context").textContent =
-    data.city + " · " + data.industry + " · " + data.period;
   const overview = panel("", "development-summary");
   const domain = developmentDomain(data);
   const total = el("div", undefined, "development-total");
@@ -237,7 +235,7 @@ function renderLogistics(data, actions) {
   for (const direction of ["原料进货", "成品发运"])
     filter.append(button(direction, () => showRoutes(direction)));
   routes.append(filter, content);
-  showRoutes("原料进货");
+  showRoutes(actions.resume.direction ?? "原料进货");
   const grid = el("div", undefined, "analysis-two-column");
   const modes = panel("运输方式结构");
   const stack = el("div", undefined, "transport-stack");
@@ -274,6 +272,8 @@ function renderLogistics(data, actions) {
   grid.append(modes, nodes);
   const indicators = el("div");
   indicators.id = "logistics-indicators";
+  const metric = actions.query.get("metric");
+  indicators.dataset.indicator = actions.resume.logisticsMetric ?? (metric === "safety" ? "logistics-safety" : metric ?? "");
   renderIndicatorWorkspace(indicators, data, "logistics", actions);
   const indicatorCount = data.analysis.indicators.filter(item => item.view === "logistics").length;
   const viewIndicators = button(
@@ -297,34 +297,9 @@ function renderLogistics(data, actions) {
   );
 }
 
-function renderGap(data, actions) {
+function renderComparison(data, actions) {
   const model = data.analysis.gap;
   const root = byId("gap-content");
-  const tabs = el("nav", undefined, "gap-nav");
-  tabs.setAttribute("aria-label", "从对标到改进与复算");
-  const sections = {
-    compare: el("section"),
-    actions: el("section"),
-    review: el("section"),
-  };
-  const showTab = (key) => {
-    for (const [id, node] of Object.entries(sections)) node.hidden = id !== key;
-    tabs
-      .querySelectorAll("button")
-      .forEach((node) =>
-        node.setAttribute("aria-pressed", String(node.dataset.tab === key)),
-      );
-  };
-  for (const [key, label] of [
-    ["compare", "同类城市对标"],
-    ["actions", "问题与行动"],
-    ["review", "成效复算"],
-  ]) {
-    const tab = button(label, () => showTab(key));
-    tab.dataset.tab = key;
-    tab.id = "gap-tab-" + key;
-    tabs.append(tab);
-  }
   const peers = el("select");
   peers.id = "benchmark-city";
   peers.setAttribute("aria-label", "同类产业对标城市");
@@ -345,6 +320,9 @@ function renderGap(data, actions) {
   const comparisonBody = el("div");
   comparison.append(comparisonBody);
   const gapIndicators = el("div");
+  gapIndicators.dataset.indicator = actions.resume.gapMetric ?? "";
+  const chosen = actions.query.get("peer");
+  if (model.peers.some(peer => peer.id === chosen)) peers.value = chosen;
   const showPeer = () => {
     const peer = model.peers.find((item) => item.id === peers.value);
     if (!peer) {
@@ -493,23 +471,29 @@ function renderGap(data, actions) {
         basis.append(source);
       }
       const entry = el("a", "查看对标城市数据");
-      const url = new URL(location.href);
-      url.searchParams.set("city", peer.cityId);
-      url.searchParams.set("case", peer.id);
-      url.hash = "#gap";
-      entry.href = url;
+      entry.href = actions.urlFor("gap", { peer: data.id }, {
+        city: peer.cityId, case: peer.id, period: data.period,
+      });
       basis.append(entry);
     }
     comparisonBody.replaceChildren(basis, stage, verdict, reading);
     renderIndicatorWorkspace(gapIndicators, data, "gap", actions, peer.id);
   };
-  peers.onchange = showPeer;
+  peers.onchange = () => {
+    actions.setQuery("peer", peers.value);
+    showPeer();
+  };
   showPeer();
-  sections.compare.append(
+  root.replaceChildren(
     comparison,
-    button("定位问题并安排改进", () => showTab("actions"), "primary-button"),
+    button("定位问题并安排改进", () => actions.navigate("gap-actions"), "primary-button"),
     gapIndicators,
   );
+}
+
+function renderGapActions(data, actions) {
+  const model = data.analysis.gap;
+  const root = byId("gap-content");
   const problemPanel = panel("");
   problemPanel.append(recordHeading(el("h3", "指标差距形成的问题清单"),
     recordButton("录入改进任务", () => actions.openRecord("gap", { panel: "tasks" }))));
@@ -522,7 +506,10 @@ function renderGap(data, actions) {
   const problemButton = (problem) => {
     const link = button(
       problem.title,
-      () => chooseProblem(problem),
+      () => {
+        actions.setQuery("problem", problem.id);
+        chooseProblem(problem);
+      },
       "table-link",
     );
     link.dataset.problem = problem.id;
@@ -561,16 +548,23 @@ function renderGap(data, actions) {
       ]),
     ),
   );
-  if (model.problems.length) chooseProblem(model.problems[0]);
+  const requested = actions.query.get("problem");
+  const selected = model.problems.find(problem => problem.id === requested) ?? model.problems[0];
+  if (selected) chooseProblem(selected);
   else
     detail.append(
       el("p", "本期核心指标均达到目标，继续复核交付和供应连续性。"),
     );
-  sections.actions.append(
+  root.replaceChildren(
     problemPanel,
     detail,
-    button("目标测算与成效复算", () => showTab("review"), "primary-button"),
+    button("目标测算与成效复算", () => actions.navigate("gap-review", selected?.id), "primary-button"),
   );
+}
+
+function renderGapReview(data, actions) {
+  const model = data.analysis.gap;
+  const root = byId("gap-content");
   const forecast = panel("改进目标测算");
   forecast.append(
     el(
@@ -584,7 +578,9 @@ function renderGap(data, actions) {
   selector.setAttribute("aria-label", "拟改进指标");
   for (const metric of model.metrics)
     selector.append(new Option(metric.name, metric.id));
-  selector.value = model.problems[0]?.id ?? model.metrics[0].id;
+  const requested = actions.query.get("metric");
+  selector.value = model.metrics.some(item => item.id === requested)
+    ? requested : model.problems[0]?.id ?? model.metrics[0].id;
   const input = el("input");
   input.id = "forecast-value";
   input.type = "number";
@@ -619,7 +615,10 @@ function renderGap(data, actions) {
     input.value = model.metrics.find((item) => item.id === selector.value).goal;
     update();
   };
-  selector.onchange = selectMetric;
+  selector.onchange = () => {
+    actions.setQuery("metric", selector.value);
+    selectMetric();
+  };
   input.oninput = update;
   const form = el("div", undefined, "forecast-controls");
   const metricLabel = el("label", "拟改进指标");
@@ -671,21 +670,20 @@ function renderGap(data, actions) {
         "analysis-reading",
       ),
     );
-  sections.review.append(forecast, review);
-  root.replaceChildren(tabs, ...Object.values(sections));
-  showTab("compare");
+  root.replaceChildren(forecast, review);
 }
 
-export function renderAnalysis(data, actions) {
-  if (!data.analysis) return;
-  renderDevelopment(data, actions);
-  renderLogistics(data, actions);
-  renderResilience(data, actions);
-  renderGap(data, actions);
-  renderIndicatorWorkspace(
-    byId("supply-indicators-content"),
-    data,
-    "supply",
-    actions,
-  );
+const renderers = {
+  overview: renderDevelopment,
+  logistics: renderLogistics,
+  "supply-indicators": (data, actions) =>
+    renderIndicatorWorkspace(byId("supply-indicators-content"), data, "supply", actions),
+  resilience: renderResilience,
+  gap: renderComparison,
+  "gap-actions": renderGapActions,
+  "gap-review": renderGapReview,
+};
+
+export function renderAnalysis(page, data, actions) {
+  if (data.analysis) renderers[page]?.(data, actions);
 }

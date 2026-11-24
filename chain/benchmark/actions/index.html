@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7f9">
+  <title>产业链问题与行动 · 产业链供应分析指数 · 全国物流网</title>
+  <link rel="stylesheet" href="../../../scene.css?v=20261124-pages">
+  <script type="module" src="../../../scene-app.js?v=20261124-pages"></script>
+</head>
+<body class="scene multipage-scene" data-scene="gap-actions">
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="../../../" aria-label="全国物流网首页"><img class="official-logo" src="../../../unidata-logo-color.jpg" alt="数联科技 Unidata Tech"></a>
+      <span class="header-divider" aria-hidden="true"></span><a href="../../../" class="platform-name">全国物流网</a>
+      <nav aria-label="平台导航">
+        <a href="../../../#network">平台总览</a>
+        <a href="../../../#catalog">方案 · 产品 · 场景</a>
+        <a href="../../../PRD.docx" download>下载需求文档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap workspace">
+    <header class="scene-page-heading">
+      <nav class="breadcrumb" aria-label="面包屑">
+        <a href="../../../">平台首页</a><span>/</span>
+        <a href="../../../chain/" data-route="intro">产业链供应分析指数</a>
+      </nav>
+      <h1>产业链问题与行动</h1>
+      <div class="scene-purpose"><strong>定行动</strong><p>查看薄弱指标、核验因素、牵头岗位和改进措施。</p></div>
+    </header>
+    <section
+        id="evaluation-selection"
+        class="selection-bar"
+        aria-label="评价对象选择"
+      >
+        <label
+          >城市<select id="city">
+            <option value="">请选择城市</option>
+          </select></label
+        >
+        <span class="selection-divider" aria-hidden="true">/</span>
+        <label class="industry-select"
+          >产业链<select id="case" disabled>
+            <option value="">请先选择城市</option>
+          </select></label
+        >
+        <label class="period-select"
+          >统计月份<select id="period" disabled>
+            <option value="">请选择产业链</option>
+          </select></label
+        >
+        <p id="selection-note" aria-live="polite">先选城市，再选产业链</p>
+      </section>
+      <div id="empty-state" class="empty-state">
+        <p class="section-kicker">城市产业评价</p>
+        <h2>从一座城市开始</h2>
+        <p>选择城市，查看当地产业链的配套能力与供应资源。</p>
+        <div id="city-shortcuts" class="city-shortcuts"></div>
+      </div>
+
+    <nav class="scene-nav" aria-label="产业链分析导航"><a href="../../../chain/overview/" data-route="overview">发展总览</a>
+<a href="../../../chain/logistics/" data-route="logistics">产业链物流分析</a>
+<a href="../../../chain/supply/" data-route="supply">产业链供应分析</a>
+<a href="../../../chain/resilience/" data-route="resilience">产业链韧性分析</a>
+<a href="../../../chain/benchmark/" data-route="gap" aria-current="page">产业链差距分析</a></nav>
+    
+    <nav class="gap-nav" aria-label="差距分析导航"><a href="../../../chain/benchmark/" data-route="gap">同类城市对标</a>
+<a href="../../../chain/benchmark/actions/" data-route="gap-actions" aria-current="page">问题与行动</a>
+<a href="../../../chain/benchmark/review/" data-route="gap-review">成效复算</a></nav>
+    <div id="view-loading" class="scene-view-status" role="status" hidden></div>
+    <div id="workspace-content" hidden><div id="gap-content"></div>
+</div>
+    <details class="notes" id="method">
+        <summary>评价口径与数据来源</summary>
+        <p>
+          发展总指数由物流保障、供应配套、供应韧性按 30%、40%、30% 合成。
+          差距分析用于同类产业对标、改进清单与同口径复算。
+          其中供应分由环节覆盖率、本地配套率、供应商集中度、龙头依赖度按
+          30%、30%、20%、20% 加权。正向指标取百分数原值，逆向指标用 100
+          减去原值。
+        </p>
+        <p>
+          物流、经营与风险观测、同业对比数据采用情景测算，改进清单为当期研判建议。开封企业关系按各品类公开资料归集，集团采购、合作框架与车型适配保留各自披露口径。
+        </p>
+        <p id="data-channel"></p>
+      </details>
+
+  </main>
+  <dialog id="calculation-dialog" aria-labelledby="calculation-title">
+      <div class="calculation-shell">
+        <button type="button" id="calculation-close" aria-label="关闭计算说明">
+          ×
+        </button>
+        <p id="calculation-context" class="section-kicker"></p>
+        <h2 id="calculation-title"></h2>
+        <div id="calculation-content"></div>
+        <div id="calculation-actions"></div>
+      </div>
+    </dialog>
+    <dialog id="record-dialog" aria-labelledby="record-title">
+      <header class="record-header">
+        <div><p class="record-context"></p><h2 id="record-title"></h2></div>
+        <button type="button" class="record-close" aria-label="关闭数据录入">×</button>
+      </header>
+      <div class="record-body"></div>
+      <p class="record-message" role="status"></p>
+      <div class="record-footer"></div>
+    </dialog>
+
+  <footer class="wrap footer"><span>全国物流网 · 产业链协同</span><a href="../../../PRD.docx" download>产品需求文档（Word）</a></footer>
+</body>
+</html>

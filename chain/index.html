@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7f9">
+  <title>产业链供应分析指数 · 全国物流网</title>
+  <link rel="stylesheet" href="../scene.css?v=20261124-pages">
+  <script type="module" src="../scene-app.js?v=20261124-pages"></script>
+</head>
+<body class="scene multipage-scene" data-scene="intro">
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="../" aria-label="全国物流网首页"><img class="official-logo" src="../unidata-logo-color.jpg" alt="数联科技 Unidata Tech"></a>
+      <span class="header-divider" aria-hidden="true"></span><a href="../" class="platform-name">全国物流网</a>
+      <nav aria-label="平台导航">
+        <a href="../#network">平台总览</a>
+        <a href="../#catalog">方案 · 产品 · 场景</a>
+        <a href="../PRD.docx" download>下载需求文档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap workspace">
+    <div class="page-intro purpose-hero">
+        <div class="purpose-copy">
+          <nav class="breadcrumb" aria-label="面包屑">
+            <a href="../">平台首页</a><span>/</span
+            ><a href="../#catalog">产业链协同</a>
+          </nav>
+          <h1><span>产业链供应分析指数</span>用指数判断产业链条发展质量</h1>
+          <p>
+            汇聚物流、贸易与企业数据，从发展判断、薄弱环节走到改进行动，再用同一口径检验成效。
+          </p>
+          <div class="purpose-actions">
+            <a href="#evaluation-selection" class="purpose-primary"
+              >选择城市与产业链</a
+            ><a href="../chain/trace/" data-route="trace" class="purpose-trace">查看供应链追溯</a>
+          </div>
+        </div>
+        <img
+          src="../logistics-hero.webp"
+          alt="物流园区与集疏运设施"
+          class="purpose-image"
+        />
+      </div>
+      <section
+        id="view-directory"
+        class="view-directory"
+        aria-label="四张分析视图"
+      >
+        <a href="../chain/logistics/" data-route="logistics"
+          ><h2>产业链物流分析</h2>
+          <strong>摸清货流与通道</strong>
+          <p>原料来源、成品流向、物流节点与运输方式。</p></a
+        >
+        <a href="../chain/supply/" data-route="supply"
+          ><h2>产业链供应分析</h2>
+          <strong>看清供方与配套</strong>
+          <p>采购结构、环节覆盖、关键部件与供应链追溯。</p></a
+        >
+        <a href="../chain/resilience/" data-route="resilience"
+          ><h2>产业链韧性分析</h2>
+          <strong>核验供应风险</strong>
+          <p>采购与到货异常交叉验证，寻找替代来源与备用线路。</p></a
+        >
+        <a href="../chain/benchmark/" data-route="gap"
+          ><h2>产业链差距分析</h2>
+          <strong>把差距转成工作</strong>
+          <p>同类城市对比、改进清单、责任岗位与成效复算。</p></a
+        >
+      </section>
+<div class="scene-selection"><section
+        id="evaluation-selection"
+        class="selection-bar"
+        aria-label="评价对象选择"
+      >
+        <label
+          >城市<select id="city">
+            <option value="">请选择城市</option>
+          </select></label
+        >
+        <span class="selection-divider" aria-hidden="true">/</span>
+        <label class="industry-select"
+          >产业链<select id="case" disabled>
+            <option value="">请先选择城市</option>
+          </select></label
+        >
+        <label class="period-select"
+          >统计月份<select id="period" disabled>
+            <option value="">请选择产业链</option>
+          </select></label
+        >
+        <p id="selection-note" aria-live="polite">先选城市，再选产业链</p>
+      </section>
+      <div id="empty-state" class="empty-state">
+        <p class="section-kicker">城市产业评价</p>
+        <h2>从一座城市开始</h2>
+        <p>选择城市，查看当地产业链的配套能力与供应资源。</p>
+        <div id="city-shortcuts" class="city-shortcuts"></div>
+      </div>
+</div>
+  </main>
+  
+  <footer class="wrap footer"><span>全国物流网 · 产业链协同</span><a href="../PRD.docx" download>产品需求文档（Word）</a></footer>
+</body>
+</html>
