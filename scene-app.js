@@ -7,7 +7,7 @@ import {
 } from "./score-trend-model.js";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
-import { renderAnalysis } from "./analysis-views.js?v=20261124-chart-labels";
+import { renderAnalysis } from "./analysis-views.js?v=20261124-benchmark-workspace";
 import { gapRoutes, sceneUrl, supplyMetrics } from "./scene-routes.js?v=20261124-pages";
 
 const byId = (id) => document.getElementById(id);
@@ -18,8 +18,9 @@ const { clearTraceMap, renderTraceMap, fitTraceMap } = page === "trace"
   : {};
 const context = () => ({ city: view.city.value, case: view.case.value, period: view.period.value });
 function urlFor(route, detail, selected = context()) {
-  const peer = selected.case === view.case.value && gapRoutes.includes(page) && gapRoutes.includes(route)
-    ? new URLSearchParams(location.search).get("peer") : null;
+  const query = new URLSearchParams(location.search);
+  const peer = selected.case === query.get("case") && gapRoutes.includes(page) && gapRoutes.includes(route)
+    ? query.get("peer") : null;
   return sceneUrl(siteRoot, route, selected, { peer, ...detail });
 }
 const view = Object.fromEntries(
@@ -547,7 +548,9 @@ function openCalculation(metricId) {
 function navigate(route, metric) {
   const detail = route === "gap-actions" ? { problem: metric } : { metric };
   const url = urlFor(route, detail);
-  if (route === "logistics" && metric) url.hash = "logistics-indicators";
+  if (route === "gap-actions" && metric) url.hash = "problem-detail";
+  else if (gapRoutes.includes(page) && gapRoutes.includes(route)) url.hash = "benchmark-navigation";
+  else if (route === "logistics" && metric) url.hash = "logistics-indicators";
   location.assign(url);
 }
 
@@ -560,7 +563,7 @@ function setQuery(key, value) {
   if (value) url.searchParams.set(key, value);
   else url.searchParams.delete(key);
   history.replaceState(null, "", url);
-  if (key === "peer") updateNavigation(context());
+  if (gapRoutes.includes(page)) updateNavigation(context());
 }
 
 function syncContext({ clearDetail = false } = {}) {
@@ -577,8 +580,17 @@ function syncContext({ clearDetail = false } = {}) {
 }
 
 function updateNavigation(selected) {
+  const query = new URLSearchParams(location.search);
   for (const link of document.querySelectorAll("a[data-route]")) {
-    link.href = urlFor(link.dataset.route, undefined, selected);
+    const route = link.dataset.route;
+    const inBenchmark = selected.case && link.closest(".gap-nav");
+    const detail = inBenchmark ? {
+      problem: route === "gap-actions" && page === "gap-actions" ? query.get("problem") : null,
+      metric: route === "gap-review" && page !== "gap" ? query.get(page === "gap-actions" ? "problem" : "metric") : null,
+    } : undefined;
+    const url = urlFor(route, detail, selected);
+    if (inBenchmark) url.hash = "benchmark-navigation";
+    link.href = url;
   }
 }
 
