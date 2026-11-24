@@ -7,7 +7,7 @@ import {
 } from "./score-trend-model.js";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
-import { renderAnalysis } from "./analysis-views.js?v=20261124-benchmark-workspace";
+import { renderAnalysis } from "./analysis-views.js?v=20261124-task-priority";
 import { gapRoutes, sceneUrl, supplyMetrics } from "./scene-routes.js?v=20261124-pages";
 
 const byId = (id) => document.getElementById(id);

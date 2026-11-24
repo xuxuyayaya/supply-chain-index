@@ -4,7 +4,7 @@ import { scenePages, mainRoutes, supplyRoutes, gapRoutes } from "../frontend/sce
 const frontend = new URL("../frontend/", import.meta.url);
 const templates = new URL("../templates/scene/", import.meta.url);
 const read = name => readFile(new URL(name + ".html", templates), "utf8");
-const revision = "20261124-benchmark-workspace";
+const revision = "20261124-task-priority";
 
 const [layout, selection, notes, dialogs] = await Promise.all(
   ["layout", "selection", "notes", "dialogs"].map(read),

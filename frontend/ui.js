@@ -7,6 +7,14 @@ export function el(tag, text, className) {
   return node;
 }
 
+const priorityTones = { 高: "high", 中: "medium", 低: "low" };
+
+export function priorityBadge(priority, withLabel = false) {
+  const badge = el("span", priority ? priority + (withLabel ? "优先级" : "") : "—", "task-priority");
+  badge.dataset.level = priorityTones[priority] ?? "";
+  return badge;
+}
+
 export function recordButton(label, open, accessibleLabel = label) {
   const button = el("button", label, "record-link");
   button.type = "button";
