@@ -1090,9 +1090,9 @@ function renderSystem(data) {
     const label = { priority: "优先提升", risk: "优先核验", attention: "待提升", steady: "已达目标" }[tone];
     const status = el("span", undefined, "assessment-status " + tone);
     if (problem) {
-      const arrow = el("span", "↑");
-      arrow.setAttribute("aria-hidden", "true");
-      status.append(arrow);
+      const icon = el("span", tone === "risk" ? "!" : "↑");
+      icon.setAttribute("aria-hidden", "true");
+      status.append(icon);
     }
     status.append(label);
     heading.append(el("h4", component.name), status);
