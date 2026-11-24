@@ -16,15 +16,29 @@ npm start
 npm test
 ```
 
-打开 http://localhost:3000 查看门户首页，从「方案 · 产品 · 场景」进入指数分析。也可直接访问 http://localhost:3000/supply-index.html。后端负责案例查询、指数计算、贸易汇总和追溯图。案例数据在 `server/catalog.mjs`。
+打开 http://localhost:3000 查看门户首页，从「方案 · 产品 · 场景」进入指数分析。也可直接访问 http://localhost:3000/chain/。后端负责案例查询、指数计算、贸易汇总和追溯图。案例数据在 `server/catalog.mjs`。
 
 ## 部署
 
-`main` 分支包含完整前后端。GitHub Pages 从 `gh-pages` 分支根目录发布。运行 `npm run snapshot` 后，前端目录包含月度快照。发布时将 `frontend/` 内容与 docs/PRD.docx 同步到 Pages 分支根目录。
+`main` 分支包含完整前后端。GitHub Pages 从 `gh-pages` 分支根目录发布。运行 `npm run build:pages` 生成 `frontend/chain/` 下的独立页面，运行 `npm run snapshot` 生成月度快照。发布时将 `frontend/` 内容与 docs/PRD.docx 同步到 Pages 分支根目录。
 
-Render 使用 Node.js 运行时，构建命令 `npm test`，启动命令 `npm start`。后端监听 `PORT`。健康端点为 `/api/health`。前端部署域名或 API 域名变化时，同步更新服务端 CORS 以及 `frontend/app.js` 的 API 地址。
+Render 使用 Node.js 运行时，构建命令 `npm test`，启动命令 `npm start`。后端监听 `PORT`。健康端点为 `/api/health`。前端部署域名或 API 域名变化时，同步更新服务端 CORS 以及 `frontend/scene-app.js` 的 API 地址。
 
 月度评分和经营数据采用情景测算。开封 13 类部件的节点、供货范围与公开资料见 server/kaifeng-trace.json。
+
+## 场景页面
+
+导航使用独立地址，链接携带城市、产业链、统计月等选择。总览综合研判可用 `overview/#system` 直达。历史 `supply-index.html` 带锚点的地址会跳到对应新页面。
+
+| 页面 | 相对地址 |
+| --- | --- |
+| 场景介绍 | `chain/` |
+| 发展总览 | `chain/overview/` |
+| 物流、供应、韧性 | `chain/logistics/`、`chain/supply/`、`chain/resilience/` |
+| 供应链追溯 | `chain/trace/` |
+| 城市对标与复算 | `chain/benchmark/`、`chain/benchmark/actions/`、`chain/benchmark/review/` |
+
+各页面共享 `templates/scene/` 中的页框、导航和录入口径，按当前地址生成对应内容。
 
 ## 指数接口与高德地图
 

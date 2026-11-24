@@ -1,0 +1,29 @@
+<section
+        id="evaluation-selection"
+        class="selection-bar"
+        aria-label="评价对象选择"
+      >
+        <label
+          >城市<select id="city">
+            <option value="">请选择城市</option>
+          </select></label
+        >
+        <span class="selection-divider" aria-hidden="true">/</span>
+        <label class="industry-select"
+          >产业链<select id="case" disabled>
+            <option value="">请先选择城市</option>
+          </select></label
+        >
+        <label class="period-select"
+          >统计月份<select id="period" disabled>
+            <option value="">请选择产业链</option>
+          </select></label
+        >
+        <p id="selection-note" aria-live="polite">先选城市，再选产业链</p>
+      </section>
+      <div id="empty-state" class="empty-state">
+        <p class="section-kicker">城市产业评价</p>
+        <h2>从一座城市开始</h2>
+        <p>选择城市，查看当地产业链的配套能力与供应资源。</p>
+        <div id="city-shortcuts" class="city-shortcuts"></div>
+      </div>

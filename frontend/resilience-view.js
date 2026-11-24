@@ -264,8 +264,9 @@ export function renderResilience(data, actions) {
     alerts: categories.filter((row) => row.alerts.length).length,
   };
   const previousView = actions.resume?.resilience;
+  const requested = previousView?.indicator ?? actions.query.get("metric");
   const state = {
-    lens: metrics.some(metric => metric.id === previousView?.indicator) ? previousView.indicator : metrics[0].id,
+    lens: metrics.some(metric => metric.id === requested) ? requested : metrics[0].id,
     scope: previousView?.scope || "all",
     query: previousView?.query || "",
     page: Number(previousView?.page) || 1,
@@ -539,6 +540,7 @@ export function renderResilience(data, actions) {
       "",
       () => {
         state.lens = metric.id;
+        actions.setQuery("metric", metric.id);
         renderMetric();
       },
       "indicator-selector-item resilience-metric-tab",

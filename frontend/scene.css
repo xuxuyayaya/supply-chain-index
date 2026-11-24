@@ -225,9 +225,6 @@ a:hover {
   font-weight: 700;
   border-color: var(--red);
 }
-#workspace-content > section {
-  min-height: 350px;
-}
 .section-top {
   display: flex;
   justify-content: space-between;
@@ -2459,22 +2456,6 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   font-size: 14px;
   color: var(--red);
 }
-#supply > .section-top h2 {
-  font-size: clamp(25px, 2.8vw, 32px);
-}
-#supply > section > .section-top h2,
-#supply-indicators .indicator-workspace-heading h3 {
-  font-size: clamp(23px, 2.3vw, 28px);
-}
-#supply-overview > .section-top .section-kicker {
-  display: none;
-}
-#supply-overview > .section-top {
-  margin-top: 25px;
-}
-#overview > #system {
-  margin-top: 31px;
-}
 #system > .section-top .section-kicker {
   display: none;
 }
@@ -3255,37 +3236,6 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   width: 148px;
   height: auto;
   object-fit: contain;
-}
-#back-intro {
-  display: none;
-  margin: 25px 0 18px;
-  font-size: 14px;
-}
-.analysis-mode .purpose-hero {
-  display: none;
-}
-.analysis-mode #back-intro {
-  display: inline-block;
-}
-.analysis-mode .selection-bar {
-  margin-top: 0;
-}
-.selection-required {
-  background: white;
-  padding: 32px;
-  border-radius: 14px;
-  margin: 26px 0;
-}
-.selection-required h2 {
-  font-size: 26px;
-  margin-bottom: 12px;
-}
-.selection-required p {
-  color: var(--muted);
-  font-size: 16px;
-}
-.context-required > section {
-  display: none !important;
 }
 .indicator-workspace {
   margin-top: clamp(26px, 4vw, 44px);
@@ -4733,11 +4683,75 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   font-size:.95rem;
   line-height:1.55;
 }
-.selection-required .scene-purpose { margin-bottom:.9rem; }
 @media (max-width:680px) {
   .scene-nav { gap:1.3rem; }
   .scene-nav a { font-size:1rem; }
   #record-dialog { width:calc(100% - 1rem); max-height:calc(100dvh - 1rem); }
   .record-access { grid-template-columns:1fr; }
   .record-footer { flex-wrap:wrap; gap:.5rem; }
+}
+
+/* Each analysis page starts with its own title and the shared evaluation filters. */
+.multipage-scene .scene-page-heading {
+  padding: 26px 0 23px;
+}
+.scene-page-heading .breadcrumb {
+  margin: 0 0 14px;
+}
+.scene-page-heading h1 {
+  margin: 0;
+  font-size: clamp(28px, 3.5vw, 42px);
+  line-height: 1.2;
+  font-weight: 750;
+}
+.scene-page-heading .scene-purpose {
+  margin-top: 10px;
+}
+.multipage-scene .selection-bar {
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.multipage-scene .scene-nav {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+.multipage-scene .supply-nav,
+.multipage-scene .gap-nav {
+  margin-bottom: 22px;
+}
+.multipage-scene #workspace-content {
+  min-width: 0;
+}
+.multipage-scene #workspace-content > .indicator-workspace {
+  margin-top: 0;
+}
+.multipage-scene #system {
+  margin-top: 30px;
+}
+.scene-view-status {
+  padding: 24px 0;
+  min-height: 130px;
+  color: var(--muted);
+}
+.purpose-actions .purpose-trace {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--wine);
+  font-weight: 750;
+}
+.scene-selection {
+  scroll-margin-top: 20px;
+}
+.scene-selection .empty-state .purpose-primary {
+  display: inline-block;
+}
+@media (max-width: 700px) {
+  .multipage-scene .scene-page-heading {
+    padding: 18px 0;
+  }
+  .multipage-scene .scene-nav {
+    margin-bottom: 18px;
+  }
 }

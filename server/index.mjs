@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { recordApi } from './record-api.mjs';
 import { currentRecords, syncRecords } from './record-store.mjs';
 import { listCases, getCase, getIndex, getTrace } from './catalog.mjs';
+import { scenePages } from '../frontend/scene-routes.js';
 
 const files = new Map([
   ['/', ['index.html', 'text/html;charset=utf-8']],
@@ -28,8 +29,19 @@ const files = new Map([
   ['/indicator-workspace.js', ['indicator-workspace.js', 'text/javascript;charset=utf-8']],
   ['/record-editor.js', ['record-editor.js', 'text/javascript;charset=utf-8']],
   ['/record-schema.js', ['record-schema.js', 'text/javascript;charset=utf-8']],
-  ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
+  ['/app.js', ['app.js', 'text/javascript;charset=utf-8']],
+  ['/scene-app.js', ['scene-app.js', 'text/javascript;charset=utf-8']],
+  ['/scene-routes.js', ['scene-routes.js', 'text/javascript;charset=utf-8']],
+  ['/legacy-scene.js', ['legacy-scene.js', 'text/javascript;charset=utf-8']]
 ]);
+
+const directoryPaths = new Set();
+for (const { path } of Object.values(scenePages)) {
+  directoryPaths.add('/' + path);
+  const index = [path + 'index.html', 'text/html;charset=utf-8'];
+  files.set('/' + path, index);
+  files.set('/' + path + 'index.html', index);
+}
 
 export const server = createServer(async (req, res) => {
   const pathname = req.url?.split('?')[0] ?? '/';
@@ -97,6 +109,10 @@ export const server = createServer(async (req, res) => {
         ? getTrace(route[1], query.get('part'), query.get('period'), currentRecords())
         : getCase(route[1], query.get('period'), currentRecords());
       return value ? send(200, value) : send(404, { error: '案例、期次或部件不存在' });
+    }
+    if (directoryPaths.has(pathname + '/')) {
+      res.writeHead(308, { Location: pathname + '/' + (query.size ? '?' + query : '') });
+      return res.end();
     }
     const file = files.get(pathname);
     if (!file) return send(404, { error: '页面不存在' });

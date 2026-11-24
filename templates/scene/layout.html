@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7f9">
+  <title>@title@ · 全国物流网</title>
+  <link rel="stylesheet" href="@root@scene.css?v=@revision@">
+  <script type="module" src="@root@scene-app.js?v=@revision@"></script>
+</head>
+<body class="scene multipage-scene" data-scene="@scene@">
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="@root@" aria-label="全国物流网首页"><img class="official-logo" src="@root@unidata-logo-color.jpg" alt="数联科技 Unidata Tech"></a>
+      <span class="header-divider" aria-hidden="true"></span><a href="@root@" class="platform-name">全国物流网</a>
+      <nav aria-label="平台导航">
+        <a href="@root@#network">平台总览</a>
+        <a href="@root@#catalog">方案 · 产品 · 场景</a>
+        <a href="@root@PRD.docx" download>下载需求文档</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap workspace">
+    @main@
+  </main>
+  @dialogs@
+  <footer class="wrap footer"><span>全国物流网 · 产业链协同</span><a href="@root@PRD.docx" download>产品需求文档（Word）</a></footer>
+</body>
+</html>

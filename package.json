@@ -5,6 +5,8 @@
   "type": "module",
   "engines": { "node": ">=22" },
   "scripts": {
+    "build:pages": "node scripts/build-pages.mjs",
+    "prestart": "npm run build:pages",
     "start": "node server/index.mjs",
     "test": "node --test",
     "snapshot": "node scripts/snapshot.mjs"

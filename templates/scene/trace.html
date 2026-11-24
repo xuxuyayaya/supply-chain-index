@@ -1,0 +1,71 @@
+<div class="panel trace-panel">
+              <div class="trace-toolbar">
+                <label>部件品类<select id="part"></select></label>
+                <label
+                  >供应层级<select id="tier">
+                    <option value="">全部层级</option>
+                    <option value="3">Tier 3</option>
+                    <option value="2">Tier 2</option>
+                    <option value="1">Tier 1</option>
+                    <option value="0">整机端</option>
+                  </select></label
+                >
+                <label
+                  >查找企业<input
+                    id="search"
+                    type="search"
+                    placeholder="搜索企业或地区"
+                /></label>
+                <button id="reset" class="quiet" type="button">重置视图</button>
+                <div class="record-toolbar" id="trace-record-actions"></div>
+              </div>
+              <p id="trace-status" aria-live="polite"></p>
+              <div class="trace-layout">
+                <div class="trace-view">
+                  <div
+                    id="map-status"
+                    class="map-status"
+                    aria-live="polite"
+                  ></div>
+                  <div class="map-frame">
+                    <div
+                      id="map-controls"
+                      role="group"
+                      aria-label="追溯地图缩放"
+                      hidden
+                    >
+                      <button
+                        type="button"
+                        id="trace-zoom-in"
+                        aria-label="放大追溯地图"
+                      >
+                        ＋</button
+                      ><button
+                        type="button"
+                        id="trace-zoom-out"
+                        aria-label="缩小追溯地图"
+                      >
+                        −</button
+                      ><button type="button" id="trace-fit">全览</button
+                      ><output id="map-zoom" aria-label="当前缩放"></output>
+                    </div>
+                    <div
+                      id="trace-map"
+                      class="trace-map"
+                      aria-label="供应商城市地图"
+                      hidden
+                    ></div>
+                  </div>
+                  <div id="graph" class="graph" aria-label="供货路径图"></div>
+                </div>
+                <aside
+                  id="node-detail"
+                  class="node-detail"
+                  aria-label="节点详情"
+                ></aside>
+              </div>
+              <p class="trace-legend">
+                <span>→ 供货路径</span><span>┈ 集团、车型或框架关联</span
+                ><span>箭头由供应方指向采购方</span>
+              </p>
+            </div>
