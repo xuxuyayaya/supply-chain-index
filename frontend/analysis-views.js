@@ -6,7 +6,7 @@ import {
 } from "./score-trend-model.js";
 import { renderResilience } from "./resilience-view.js";
 import { renderIndicatorWorkspace } from "./indicator-workspace.js";
-import { el, number } from "./ui.js";
+import { el, number, recordButton, recordHeading } from "./ui.js";
 import { simulateDevelopment } from "./analysis-model.js";
 
 const byId = (id) => document.getElementById(id);
@@ -202,10 +202,16 @@ function renderLogistics(data, actions) {
     }),
     facts,
   );
-  const routes = panel("原料进货与成品发运");
+  const routes = panel("", "logistics-routes");
+  const enterRoutes = recordButton("录入原料进货", () =>
+    actions.openRecord("routes", { panel: "routes", direction: routes.dataset.direction }));
+  routes.append(recordHeading(el("h3", "原料进货与成品发运"), enterRoutes));
   const filter = el("div", undefined, "analysis-segmented");
   const content = el("div");
   const showRoutes = (direction) => {
+    routes.dataset.direction = direction;
+    enterRoutes.textContent = "录入" + direction;
+    enterRoutes.setAttribute("aria-label", enterRoutes.textContent);
     filter
       .querySelectorAll("button")
       .forEach((node) =>
@@ -216,11 +222,10 @@ function renderLogistics(data, actions) {
       );
     content.replaceChildren(
       table(
-        ["货物流向", "品类", "途经节点", "运输方式", "运量（万吨）"],
+        ["品类", "途经节点", "运输方式", "运量（万吨）"],
         model.routes
           .filter((row) => row.direction === direction)
           .map((row) => [
-            row.direction,
             row.goods,
             row.path.join(" → "),
             row.mode,
@@ -256,7 +261,9 @@ function renderLogistics(data, actions) {
       "analysis-reading",
     ),
   );
-  const nodes = panel("关键物流节点");
+  const nodes = panel("");
+  nodes.append(recordHeading(el("h3", "关键物流节点"),
+    recordButton("录入节点", () => actions.openRecord("logistics", { panel: "nodes" }))));
   const path = el("div", undefined, "logistics-nodes");
   for (const item of model.nodes) {
     const node = el("div");
@@ -361,8 +368,34 @@ function renderGap(data, actions) {
     );
     const cityCard = (city, role, tone) => {
       const card = el("article", undefined, "city-versus-card " + tone);
+      const menu = el("details", undefined, "city-record-menu");
+      const trigger = el("summary", "录入数据", "record-link");
+      trigger.setAttribute("aria-label", "录入" + city.city + "数据");
+      const menuItems = el("div", undefined, "city-record-options");
+      for (const [group, label, panel] of [
+        ["gap", "产业增加值", "base"],
+        ["routes", "货流与线路", "routes"],
+        ["logistics", "节点与履约", "cost"],
+        ["supply", "采购与配套", "trade"],
+        ["resilience", "保供与预警", "supply"],
+      ]) {
+        menuItems.append(recordButton(label, () => {
+          menu.open = false;
+          actions.openRecord(group, { panel }, city);
+        }, city.city + " · " + label));
+      }
+      menu.append(trigger, menuItems);
+      menu.addEventListener("focusout", event => {
+        if (!menu.contains(event.relatedTarget)) menu.open = false;
+      });
+      menu.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          menu.open = false;
+          trigger.focus();
+        }
+      });
       card.append(
-        el("p", role, "section-kicker"),
+        recordHeading(el("p", role, "section-kicker"), menu),
         el("h3", city.city),
         el("p", city.industry + " · " + city.period, "city-versus-context"),
       );
@@ -477,7 +510,9 @@ function renderGap(data, actions) {
     button("定位问题并安排改进", () => showTab("actions"), "primary-button"),
     gapIndicators,
   );
-  const problemPanel = panel("指标差距形成的问题清单");
+  const problemPanel = panel("");
+  problemPanel.append(recordHeading(el("h3", "指标差距形成的问题清单"),
+    recordButton("录入改进任务", () => actions.openRecord("gap", { panel: "tasks" }))));
   const detail = panel("", "problem-detail");
   const gotoMetric = (metric) =>
     actions.navigate(
@@ -494,9 +529,11 @@ function renderGap(data, actions) {
     return link;
   };
   const chooseProblem = (problem) => {
+    detail.dataset.problem = problem.id;
     detail.replaceChildren(
       el("p", "根因核验", "section-kicker"),
-      el("h3", problem.title),
+      recordHeading(el("h3", problem.title), recordButton("编辑本任务", () =>
+        actions.openRecord("gap", { panel: "tasks", match: { id: problem.id }, field: "title" }))),
       el("p", problem.evidence, "analysis-reading"),
       el("h4", "需核验的因素"),
       el("p", problem.cause),

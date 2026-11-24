@@ -1,5 +1,6 @@
 import { renderScoreTrend } from "./score-trend.js";
-import { el, number } from "./ui.js";
+import { el, number, recordButton, recordHeading } from "./ui.js";
+import { indicatorInputs } from "./record-schema.js";
 
 const labels = {
   logistics: "物流分析",
@@ -167,7 +168,10 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
         ),
       );
     const reading = el("p", metric.summary, "indicator-reading");
-    detail.replaceChildren(top, reading, formula);
+    const entry = indicatorInputs[metric.id];
+    const tools = entry ? recordHeading(formula, recordButton(entry.label, () => actions.openRecord(entry.group, entry))) : formula;
+    if (entry) tools.classList.add("indicator-record-tools");
+    detail.replaceChildren(top, reading, tools);
     if (metric.scoring)
       detail.append(
         renderScoreTrend(data.analysis.development.history, "", {
