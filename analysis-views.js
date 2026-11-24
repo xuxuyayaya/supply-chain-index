@@ -1,3 +1,9 @@
+import { renderScoreTrend } from "./score-trend.js";
+import {
+  developmentDomain,
+  scoreDomain,
+  scorePoints,
+} from "./score-trend-model.js";
 import { renderResilience } from "./resilience-view.js";
 import { renderIndicatorWorkspace } from "./indicator-workspace.js";
 import { el, number } from "./ui.js";
@@ -59,6 +65,7 @@ function renderDevelopment(data, actions) {
   byId("development-context").textContent =
     data.city + " · " + data.industry + " · " + data.period;
   const overview = panel("", "development-summary");
+  const domain = developmentDomain(data);
   const total = el("div", undefined, "development-total");
   total.append(el("p", "产业链发展指数", "section-kicker"));
   const score = button("", () => actions.showMethod(), "development-score");
@@ -98,25 +105,28 @@ function renderDevelopment(data, actions) {
       scoreLink("分", component.score, () => actions.showMethod(component.id)),
       el("p", "总指数权重 " + Math.round(component.weight * 100) + "%"),
     );
+    card.append(
+      renderScoreTrend(development.history, component.id, {
+        title: component.name + "月度走势",
+        endPeriod: data.period,
+        compact: true,
+        domain,
+        heading: false,
+      }),
+    );
     components.append(card);
   }
-  overview.append(total, components);
-  const recent = el("div", undefined, "development-history");
-  recent.append(el("h3", "同口径月度观察"));
-  for (const point of [...development.history].reverse())
-    recent.append(
-      stat(
-        point.period,
-        number(point.development) + " 分",
-        "物流 " +
-          number(point.logistics) +
-          " · 供应 " +
-          number(point.supply) +
-          " · 韧性 " +
-          number(point.resilience),
-      ),
-    );
-  byId("development-content").replaceChildren(overview, recent);
+  const primary = el("div", undefined, "development-primary");
+  primary.append(
+    total,
+    renderScoreTrend(development.history, "development", {
+      title: "发展指数月度走势",
+      endPeriod: data.period,
+      domain,
+    }),
+  );
+  overview.append(primary, components);
+  byId("development-content").replaceChildren(overview);
   const loop = el("section", undefined, "mechanism-loop");
   loop.append(el("h3", "从判断走到行动与成效"));
   const items = el("div", undefined, "mechanism-items");
@@ -156,12 +166,41 @@ function renderDevelopment(data, actions) {
 
 function renderLogistics(data, actions) {
   const model = data.analysis.logistics;
-  const summary = el("div", undefined, "analysis-summary-row");
-  summary.append(
-    scoreLink("物流保障分", model.score, () => actions.showMethod("logistics")),
+  const summary = panel("", "score-trend-panel logistics-score-panel");
+  const current = el("div", undefined, "score-trend-current");
+  current.append(
+    el("p", "物流保障分", "section-kicker"),
+    scoreLink("分", model.score, () => actions.showMethod("logistics")),
+  );
+  const prior = data.analysis.development.history.find(
+    (point) => point.period < data.period,
+  );
+  current.append(
+    el(
+      "p",
+      prior
+        ? "较上月 " +
+            (model.score - prior.logistics >= 0 ? "+" : "") +
+            number(model.score - prior.logistics) +
+            " 分"
+        : "首个统计月份",
+      "score-trend-change",
+    ),
+  );
+  const facts = el("div", undefined, "score-trend-facts");
+  facts.append(
     stat("月度货流", number(model.volume) + " 万吨"),
     stat("准时交付", number(data.evaluation.ontime) + "%"),
     stat("单证互通", number(model.documentConnectivity) + "%"),
+  );
+  summary.append(
+    current,
+    renderScoreTrend(data.analysis.development.history, "logistics", {
+      title: "物流保障月度走势",
+      endPeriod: data.period,
+      domain: developmentDomain(data),
+    }),
+    facts,
   );
   const routes = panel("原料进货与成品发运");
   const filter = el("div", undefined, "analysis-segmented");
@@ -308,6 +347,15 @@ function renderGap(data, actions) {
     const gdpGap =
       ((peer.addedValue - model.current.addedValue) / peer.addedValue) * 100;
     const stage = el("div", undefined, "city-versus-stage");
+    const cityHistories = [
+      data.analysis.development.history,
+      model.peerHistory?.[peer.id] ?? [],
+    ];
+    const comparisonDomain = scoreDomain(
+      cityHistories.map((history) =>
+        scorePoints(history, "development", { endPeriod: data.period }),
+      ),
+    );
     const cityCard = (city, role, tone) => {
       const card = el("article", undefined, "city-versus-card " + tone);
       card.append(
@@ -321,6 +369,25 @@ function renderGap(data, actions) {
         el("strong", number(city.development)),
         el("small", "/ 100"),
       );
+      const numberBox = el("div", undefined, "city-total-number");
+      numberBox.append(...[...total.children].slice(1));
+      total.append(
+        numberBox,
+        renderScoreTrend(
+          city.id === data.id
+            ? data.analysis.development.history
+            : (model.peerHistory?.[city.id] ?? []),
+          "development",
+          {
+            title: city.city + "发展指数月度走势",
+            endPeriod: data.period,
+            compact: true,
+            domain: comparisonDomain,
+            heading: false,
+          },
+        ),
+      );
+      total.classList.add("with-trend");
       card.append(total);
       const dimensions = el("div", undefined, "city-versus-dimensions");
       for (const component of data.analysis.development.components) {

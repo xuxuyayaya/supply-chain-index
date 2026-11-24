@@ -1,3 +1,5 @@
+import { renderScoreTrend } from "./score-trend.js";
+import { developmentDomain } from "./score-trend-model.js";
 import { el, number } from "./ui.js";
 import {
   assembleResilienceCategories,
@@ -310,7 +312,17 @@ export function renderResilience(data, actions) {
       "muted",
     ),
   );
-  summary.append(score, judgment);
+  const currentCopy = el("div", undefined, "resilience-current-copy");
+  judgment.querySelector(".muted")?.remove();
+  currentCopy.append(score, judgment);
+  summary.append(
+    currentCopy,
+    renderScoreTrend(data.analysis.development.history, "resilience", {
+      title: "供应韧性月度走势",
+      endPeriod: data.period,
+      domain: developmentDomain(data),
+    }),
+  );
   const console = el("section", undefined, "analysis-panel resilience-console");
   const heading = el("div", undefined, "resilience-console-heading");
   heading.append(
