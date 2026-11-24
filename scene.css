@@ -2305,9 +2305,9 @@ button.trade-category-row:hover meter::-moz-meter-bar {
 #evaluation-selection {
   scroll-margin-top: 30px;
 }
-.supply-nav {
+.supply-nav,
+.gap-nav {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.45fr);
   gap: 6px;
   margin: 0 0 clamp(24px, 3vw, 36px);
   padding: 6px;
@@ -2315,7 +2315,14 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   border: 1px solid var(--line);
   border-radius: 12px;
 }
-.supply-nav a {
+.supply-nav {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.45fr);
+}
+.gap-nav {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.supply-nav a,
+.gap-nav button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2328,7 +2335,14 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   line-height: 1.3;
   text-align: center;
 }
-.supply-nav a:hover {
+.gap-nav button {
+  border: 0;
+  background: transparent;
+  text-wrap: balance;
+  cursor: pointer;
+}
+.supply-nav a:hover,
+.gap-nav button:hover {
   background: #f5f6f8;
   color: var(--wine);
 }
@@ -2338,7 +2352,8 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   font-weight: 750;
   box-shadow: inset 0 -3px var(--red);
 }
-.supply-nav a:focus-visible {
+.supply-nav a:focus-visible,
+.gap-nav button:focus-visible {
   outline: 2px solid var(--wine);
   outline-offset: -3px;
 }
@@ -2364,24 +2379,13 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   font-size: 1.15em;
   line-height: 1;
 }
-.gap-nav {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 0 0 26px;
-}
-.gap-nav button {
-  font-size: 14px;
-  color: #68737d;
-  padding: 8px 16px;
-  border: 0;
-  background: transparent;
-  border-radius: 6px;
-}
 .gap-nav button[aria-pressed="true"] {
-  background: #efe3e7;
-  color: var(--wine);
-  font-weight: 600;
+  background: var(--wine);
+  color: #fff;
+  font-weight: 750;
+}
+.gap-nav button[aria-pressed="true"]:focus-visible {
+  outline-color: #fff;
 }
 .view-text-link {
   font-size: 14px;
@@ -3131,17 +3135,11 @@ button.trade-category-row:hover meter::-moz-meter-bar {
     grid-column: 1 / -1;
     min-height: 54px;
   }
-  .supply-nav a {
+  .supply-nav a,
+  .gap-nav button {
     min-height: 48px;
     padding: 8px 5px;
     font-size: 16px;
-  }
-  .gap-nav button {
-    font-size: 13px;
-    padding: 7px 11px;
-  }
-  .gap-nav {
-    gap: 6px;
   }
   .analysis-actions {
     gap: 10px;
