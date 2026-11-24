@@ -611,8 +611,19 @@ function showScreen(
     if (state.trace) renderGraph();
     else if (!traceRequest) loadTrace();
   } else graphObserver?.disconnect();
-  if (updateHash)
-    document.querySelector(".scene-nav").scrollIntoView({ block: "start" });
+  if (updateHash) {
+    const nav = document.querySelector(".scene-nav");
+    window.scrollTo({
+      top: Math.max(
+        0,
+        window.scrollY +
+          byId(outer).getBoundingClientRect().top -
+          nav.offsetHeight -
+          20,
+      ),
+      behavior: "auto",
+    });
+  }
 }
 
 function applyRoute() {
