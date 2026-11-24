@@ -32,10 +32,10 @@ export function renderScoreTrend(
   );
   figure.dataset.scoreTrend = metricId ?? field;
   figure.dataset.monthCount = String(points.length);
-  figure.setAttribute("aria-label", title);
+  figure.setAttribute("aria-label", title + "，单位：分");
   if (heading) {
     const header = el("div", undefined, "score-trend-heading");
-    header.append(el("span", title));
+    header.append(el("span", title + "（分）"));
     if (points.length)
       header.append(
         el(

@@ -1,5 +1,5 @@
-import { createRecordEditor } from "./record-editor.js?v=20261124-records";
-import { renderScoreTrend } from "./score-trend.js";
+import { createRecordEditor } from "./record-editor.js?v=20261124-chart-labels";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
 import {
   developmentDomain,
   scoreDomain,
@@ -7,7 +7,7 @@ import {
 } from "./score-trend-model.js";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
-import { renderAnalysis } from "./analysis-views.js?v=20261124-pages";
+import { renderAnalysis } from "./analysis-views.js?v=20261124-chart-labels";
 import { gapRoutes, sceneUrl, supplyMetrics } from "./scene-routes.js?v=20261124-pages";
 
 const byId = (id) => document.getElementById(id);
@@ -242,7 +242,7 @@ function renderOverview(data) {
     el("span", "本期标准分", "current"),
     el("span", "优秀线", "goal"),
   );
-  visual.append(canvas, legend);
+  visual.append(el("p", "供应能力雷达图 · 标准分（0–100 分）", "chart-note radar-title"), canvas, legend);
   const indicators = el("div", undefined, "portrait-metrics");
   const metricDomain = scoreDomain(
     data.metrics.map((metric) =>
@@ -816,7 +816,7 @@ function renderTradeOrigins(trade) {
     legend.append(row);
   }
   figure.append(donut, legend);
-  panel.append(figure);
+  panel.append(el("p", "环图表示各来源地采购额占本期采购总额的比例。", "chart-note"), figure);
   return panel;
 }
 
@@ -883,7 +883,7 @@ function renderTradeSuppliers(trade) {
   );
   summary.append(total, remainder);
   const figure = el("figure", undefined, "supplier-figure");
-  figure.append(el("figcaption", "采购额（亿元） · 占采购总额的比例"));
+  figure.append(el("figcaption", "柱高与纵轴表示采购额（亿元），百分数表示该供应商占本期采购总额的比例。"));
   const graph = el("div", undefined, "supplier-graph");
   const scale =
     Math.ceil(Math.max(1, ...trade.suppliers.map((item) => item.amount)) * 2) /
