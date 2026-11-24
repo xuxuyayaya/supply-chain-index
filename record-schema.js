@@ -73,8 +73,8 @@ export const recordGroups = {
   },
   gap: {
     view: "gap", title: "对标与改进任务",
-    note: "对标指数由同产业各城市的月度数据计算。切换城市可更新对标方；这里可维护本市增加值和任务。",
-    fields: [amount("addedValue", "本市产业增加值（亿元）", positive)],
+    note: "维护当前所选城市的月度产业增加值与改进任务。增加值更新后会重算两地的产业差距。",
+    fields: [amount("addedValue", "产业增加值（亿元）", positive)],
     sections: [list("tasks", "任务补充与修订", [
       choice("id", "关联指标", ["cost", "ontime", "safety", "coverage", "local", "cr5", "leader", "bottleneck"]),
       field("title", "任务名称"), field("action", "改进措施"), field("owner", "牵头岗位"),
@@ -111,4 +111,29 @@ export const metricLabels = {
   coverage: "环节覆盖率", local: "本地配套率", cr5: "供应商集中度",
   leader: "龙头依赖度", bottleneck: "瓶颈品类占比",
   "供货": "供货或已核验", "关联": "关联或待核验",
+};
+
+// Each indicator opens the underlying inputs that determine its displayed value.
+export const indicatorInputs = {
+  "route-flow": { group: "routes", panel: "routes", label: "录入线路" },
+  "category-direction": { group: "routes", panel: "routes", field: "goods", label: "录入品类流向" },
+  "category-volume": { group: "routes", panel: "routes", field: "volume", label: "录入品类运量" },
+  "node-access": { group: "logistics", panel: "nodes", label: "录入物流节点" },
+  "transport-mix": { group: "routes", panel: "routes", field: "mode", label: "录入运输方式" },
+  cost: { group: "logistics", panel: "cost", label: "录入费用与产值" },
+  ontime: { group: "logistics", panel: "delivery", field: "onTime", label: "录入准时交付" },
+  "logistics-safety": { group: "logistics", panel: "delivery", field: "loss", label: "录入货损货差" },
+  "data-connectivity": { group: "logistics", panel: "documents", label: "录入单证数据" },
+  "category-trade": { group: "supply", panel: "categories", label: "录入品类购销额" },
+  "supplier-trade": { group: "supply", panel: "suppliers", label: "录入供方采购额" },
+  coverage: { group: "supply", panel: "stages", label: "录入环节覆盖" },
+  local: { group: "supply", panel: "trade", label: "录入采购来源" },
+  cr5: { group: "supply", panel: "suppliers", label: "录入供应商采购额" },
+  leader: { group: "supply", panel: "revenue", label: "录入链上营收" },
+  "category-risk": { group: "resilience", panel: "supply", label: "录入需求与到货" },
+  "supplier-risk": { group: "resilience", panel: "delivery", label: "录入供应商交付" },
+  "region-risk": { group: "resilience", panel: "source", label: "录入区域来源" },
+  "chain-alert": { group: "resilience", panel: "source", field: "currentPurchase", label: "录入预警依据" },
+  bottleneck: { group: "resilience", panel: "supply", label: "录入品类供给" },
+  "improvement-tasks": { group: "gap", panel: "tasks", label: "录入改进任务" },
 };

@@ -5,7 +5,8 @@ import {
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { el, number } from "./ui.js";
+import { el, number, recordButton, recordHeading } from "./ui.js";
+import { indicatorInputs } from "./record-schema.js";
 import { renderAnalysis } from "./analysis-views.js";
 import { clearTraceMap, renderTraceMap, fitTraceMap } from "./trace-map.js";
 
@@ -217,7 +218,7 @@ function renderOverview(data) {
   const portraitHead = el("div", undefined, "portrait-heading");
   portraitHead.append(
     el("h3", "供应能力画像"),
-    el("p", "点击指标，查看计算公式"),
+    recordButton("录入配套数据", () => openRecord("supply", { panel: "stages" })),
   );
   const portraitBody = el("div", undefined, "portrait-body");
   const visual = el("figure", undefined, "portrait-visual");
@@ -788,8 +789,9 @@ function showDimension(key) {
     if (name === item.grade) term.className = "active";
     scale.append(term);
   }
+  const entry = indicatorInputs[key];
   detail.replaceChildren(
-    el("h3", item.name),
+    recordHeading(el("h3", item.name), recordButton(entry.label, () => openRecord(entry.group, entry))),
     el("p", dimension.description, "muted"),
     value,
     calculation,
@@ -851,7 +853,8 @@ function showDimension(key) {
 
 function renderTradeOrigins(trade) {
   const panel = el("article", undefined, "trade-origins trade-card");
-  panel.append(el("h3", "采购来源地"));
+  panel.append(recordHeading(el("h3", "采购来源地"),
+    recordButton("录入采购来源", () => openRecord("supply", { panel: "trade" }))));
   const figure = el("figure", undefined, "origins-figure");
   const localShare =
     trade.purchase > 0
@@ -907,8 +910,8 @@ function renderTradeOrigins(trade) {
 
 function renderTradeCategories(trade) {
   const panel = el("article", undefined, "trade-categories trade-card");
-  const heading = el("div", undefined, "trade-chart-heading");
-  heading.append(el("h3", "品类购销额"), el("span", "亿元"));
+  const heading = recordHeading(el("h3", "品类购销额（亿元）"),
+    recordButton("录入品类购销额", () => openRecord("supply", { panel: "categories" })));
   panel.append(heading);
   const rows = el("div", undefined, "trade-category-chart");
   const max = Math.max(1, ...trade.categories.map((item) => item.amount));
@@ -948,7 +951,8 @@ function renderTradeCategories(trade) {
 function renderTradeSuppliers(trade) {
   const panel = el("article", undefined, "trade-suppliers trade-card");
   const summary = el("div", undefined, "supplier-summary");
-  summary.append(el("h3", "前五家供应商"));
+  summary.append(recordHeading(el("h3", "前五家供应商"),
+    recordButton("录入采购额", () => openRecord("supply", { panel: "suppliers" }), "录入供应商采购额")));
   const score = el("button", undefined, "supplier-concentration");
   score.type = "button";
   const share =
@@ -1231,7 +1235,12 @@ function renderGraph(focusId) {
 function renderNode(trace, selected) {
   const box = view["node-detail"];
   const node = trace.nodes.find((item) => item.id === selected);
-  box.replaceChildren(el("h3", node?.label || "节点详情"));
+  const title = el("h3", node?.label || "节点详情");
+  if (node) {
+    const [part, id] = trace.partId === "all" ? node.id.split("/") : [trace.partId, node.id];
+    box.replaceChildren(recordHeading(title, recordButton("编辑节点", () =>
+      openRecord("trace", { part, panel: "nodes", match: { id }, field: "label" }))));
+  } else box.replaceChildren(title);
   const references = el("details", undefined, "source-list");
   const sources = node?.sources || trace.sources || [];
   if (sources.length) {
@@ -1339,7 +1348,7 @@ async function loadTrace() {
   }
 }
 
-async function loadCase() {
+async function loadCase(resume = {}) {
   portraitObserver?.disconnect();
   if (byId("calculation-dialog").open) byId("calculation-dialog").close();
   caseRequest?.abort();
@@ -1402,6 +1411,8 @@ async function loadCase() {
         showScreen(route, metricId || state.dimension, true, Boolean(metricId)),
       openTrace: openTracePart,
       showMethod: openDevelopmentMethod,
+      openRecord,
+      resume,
     });
     renderSystem(result.data);
     const parts = result.data.traceParts.map((part) => [part.id, part.label]);
@@ -1590,27 +1601,60 @@ document.querySelectorAll("[data-entry]").forEach((link) =>
     showScreen(state.entry, state.dimension, true);
   }),
 );
+function openRecord(group, options = {}, record = state.detail) {
+  if (!record) return;
+  const part = options.part ?? view.part.value;
+  editRecord(group, record, { ...options, part });
+}
+
 const editRecord = createRecordEditor(byId("record-dialog"), api, async () => {
+  const y = window.scrollY;
   const part = view.part.value;
+  const tier = view.tier.value;
+  const query = view.search.value;
+  const node = state.selected;
+  const direction = document.querySelector(".logistics-routes")?.dataset.direction;
+  const logisticsMetric = byId("logistics-indicators")?.dataset.indicator;
+  const resilience = state.screen === "resilience"
+    ? { ...document.querySelector(".resilience-console")?.dataset, query: byId("resilience-search")?.value }
+    : undefined;
   const peer = byId("benchmark-city")?.value;
-  await loadCase();
+  const gapTab = document.querySelector(".gap-nav button[aria-pressed='true']")?.id;
+  const gapMetric = document.querySelector("#gap-content .indicator-workspace")?.dataset.indicator;
+  const task = document.querySelector(".problem-detail")?.dataset.problem;
+  const indicator = (root, id) => {
+    if (id) document.querySelector(root + ' button[data-indicator="' + CSS.escape(id) + '"]')?.click();
+  };
+  await loadCase({ resilience });
   if (state.screen === "trace" && part && [...view.part.options].some(item => item.value === part)) {
     view.part.value = part;
     await loadTrace();
+    view.tier.value = tier;
+    view.search.value = query;
+    state.selected = state.trace?.nodes.some(item => item.id === node) ? node : null;
+    renderGraph();
   }
-  const selector = byId("benchmark-city");
-  if (selector && peer && [...selector.options].some(item => item.value === peer)) {
-    selector.value = peer;
-    selector.dispatchEvent(new Event("change"));
+  if (state.screen === "logistics") {
+    for (const button of document.querySelectorAll(".logistics-routes .analysis-segmented button")) {
+      if (button.textContent === direction) button.click();
+    }
+    indicator("#logistics-indicators", logisticsMetric);
   }
+  if (state.screen === "gap") {
+    const selector = byId("benchmark-city");
+    if (selector && peer && [...selector.options].some(item => item.value === peer)) {
+      selector.value = peer;
+      selector.dispatchEvent(new Event("change"));
+    }
+    if (gapTab) byId(gapTab)?.click();
+    if (task) document.querySelector('button[data-problem="' + CSS.escape(task) + '"]')?.click();
+    indicator("#gap-content", gapMetric);
+  }
+  window.scrollTo({ top: y, behavior: "instant" });
 });
-document.querySelectorAll("[data-record]").forEach(button => {
-  button.onclick = () => {
-    if (!state.detail) return;
-    const group = button.dataset.record;
-    const part = state.detail.traceParts.some(item => item.id === view.part.value)
-      ? view.part.value : state.detail.traceParts[0]?.id;
-    if (group !== "trace" || part) editRecord(group, state.detail, part);
-  };
-});
+
+byId("trace-record-actions").append(
+  recordButton("录入节点", () => openRecord("trace", { panel: "nodes" }), "录入追溯节点"),
+  recordButton("录入关系", () => openRecord("trace", { panel: "edges" }), "录入供货关系"),
+);
 init();

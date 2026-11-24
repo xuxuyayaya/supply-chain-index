@@ -29,6 +29,7 @@ function input(field, value, parts, update) {
     } else if (field.type === "text") control.maxLength = 500;
   }
   control.value = value ?? "";
+  control.dataset.recordField = field.key;
   control.setAttribute("aria-label", field.label);
   control.oninput = () => update(
     control.type === "number" ? (control.value === "" ? null : control.valueAsNumber)
@@ -38,23 +39,39 @@ function input(field, value, parts, update) {
 }
 
 const resiliencePanels = [
-  ["需求与到货", ["label", "demand", "delivered", "traceId"]],
-  ["供应商交付", ["label", "supplier", "scheduled", "late", "stoppedDays"]],
-  ["区域与采购", ["label", "region", "previousShare", "currentShare", "previousPurchase", "currentPurchase"]],
-  ["备选与核验", ["label", "alternatives", "alternativeCity", "route", "owner", "status"]],
+  ["supply", "需求与到货", ["label", "demand", "delivered", "traceId"]],
+  ["delivery", "供应商交付", ["label", "supplier", "scheduled", "late", "stoppedDays"]],
+  ["source", "区域与采购", ["label", "region", "previousShare", "currentShare", "previousPurchase", "currentPurchase"]],
+  ["review", "备选与核验", ["label", "alternatives", "alternativeCity", "route", "owner", "status"]],
 ];
+const basePanels = {
+  logistics: [
+    ["cost", "产值与物流费用", ["output", "cost"]],
+    ["delivery", "交付与货损", ["tickets", "onTime", "loss", "hours"]],
+    ["documents", "单证互通", ["documents", "connected"]],
+  ],
+  supply: [
+    ["trade", "采购与销售", ["local", "domestic", "imports", "sales"]],
+    ["revenue", "链上营收", ["leader", "revenue"]],
+  ],
+  gap: [["base", "产业增加值", ["addedValue"]]],
+  trace: [["base", "口径说明", ["note"]]],
+};
 
 function panelsFor(group, schema) {
+  const chooseFields = (fields, keys) => keys.map(key => fields.find(field => field.key === key));
   if (group === "resilience") {
     const section = schema.sections[0];
-    return resiliencePanels.map(([label, keys], i) => ({
-      ...section, label, fields: keys.map(key => section.fields.find(field => field.key === key)),
+    return resiliencePanels.map(([id, label, keys], i) => ({
+      ...section, id, label, fields: chooseFields(section.fields, keys),
       allFields: section.fields, editableRows: i === 0,
     }));
   }
   return [
-    ...(schema.fields ? [{ label: group === "gap" ? "产业增加值" : "基础数据", fields: schema.fields }] : []),
-    ...schema.sections.map(section => ({ ...section, editableRows: true })),
+    ...(basePanels[group] ?? []).map(([id, label, keys]) => ({
+      id, label, fields: chooseFields(schema.fields, keys),
+    })),
+    ...schema.sections.map(section => ({ ...section, id: section.key, editableRows: true })),
   ];
 }
 
@@ -99,7 +116,9 @@ export function createRecordEditor(dialog, api, refresh) {
   });
 
   function draw(session) {
-    const { schema, group, data, parts } = session;
+    const { schema, group, data, parts, options } = session;
+    const matches = (row) => options.match && Object.entries(options.match).every(([key, value]) => row[key] === value);
+    let direction = group === "routes" ? options.direction : null;
     const panels = panelsFor(group, schema);
     const tabs = el("div", undefined, "record-tabs");
     tabs.setAttribute("role", "group");
@@ -135,8 +154,7 @@ export function createRecordEditor(dialog, api, refresh) {
       save.hidden = access.hidden = true;
     }
 
-    function showPanel(index = 0) {
-      session.panel = index;
+    function showPanel(index = 0, focus = null) {
       tabs.querySelectorAll("button").forEach((item, i) => item.setAttribute("aria-pressed", String(i === index)));
       const panel = panels[index];
       content.replaceChildren();
@@ -148,6 +166,7 @@ export function createRecordEditor(dialog, api, refresh) {
           grid.append(label);
         }
         content.append(grid);
+        if (focus === "entry" && options.field) grid.querySelector('[data-record-field="' + options.field + '"]')?.focus();
         return;
       }
       const rows = data[panel.key];
@@ -164,8 +183,15 @@ export function createRecordEditor(dialog, api, refresh) {
       if (panel.editableRows) head.append(el("th", "操作"));
       table.createTHead().append(head);
       const tbody = table.createTBody();
-      rows.forEach((row, i) => {
+      const isRoutePanel = group === "routes" && panel.id === "routes";
+      const visible = rows.map((row, i) => ({ row, i })).filter(({ row }) => !isRoutePanel || !direction || row.direction === direction);
+      let target;
+      for (const { row, i } of visible) {
         const tr = tbody.insertRow();
+        if ((focus === "entry" && matches(row)) || focus === i) {
+          tr.className = "record-target-row";
+          target = tr;
+        }
         for (const field of panel.fields) {
           const td = tr.insertCell();
           if (group === "resilience" && !panel.editableRows && field.key === "label") td.textContent = row.label || "未填写品类";
@@ -176,16 +202,31 @@ export function createRecordEditor(dialog, api, refresh) {
           remove.setAttribute("aria-label", "删除第 " + (i + 1) + " 行");
           tr.insertCell().append(remove);
         }
-      });
+      }
+      if (!visible.length) {
+        const cell = tbody.insertRow().insertCell();
+        cell.colSpan = panel.fields.length + Number(panel.editableRows);
+        cell.textContent = "暂无记录，可新增一行。";
+      }
       scroller.append(table);
       const tools = el("div", undefined, "record-list-tools");
-      tools.append(el("span", "共 " + rows.length + " 行"));
+      const counts = el("span", "共 " + visible.length + " 行");
+      if (isRoutePanel) {
+        const filter = el("select");
+        filter.setAttribute("aria-label", "线路方向");
+        filter.append(new Option("全部线路", ""), new Option("原料进货", "原料进货"), new Option("成品发运", "成品发运"));
+        filter.value = direction || "";
+        filter.onchange = () => { direction = filter.value; showPanel(index); };
+        tools.append(filter);
+      }
+      tools.append(counts);
       if (panel.editableRows)
         tools.append(makeButton("＋ 新增一行", () => {
-          rows.push(emptyRow(panel.allFields ?? panel.fields));
+          const row = emptyRow(panel.allFields ?? panel.fields);
+          if (isRoutePanel && direction) row.direction = direction;
+          rows.push(row);
           changed();
-          showPanel(index);
-          content.querySelector("tbody tr:last-child input, tbody tr:last-child select")?.focus();
+          showPanel(index, rows.length - 1);
         }));
       if (group === "gap" && session.suggestions.some(item => !rows.some(row => row.id === item.id))) {
         tools.append(makeButton("带入本期建议任务", () => {
@@ -195,11 +236,21 @@ export function createRecordEditor(dialog, api, refresh) {
         }));
       }
       content.append(tools, scroller);
+      if (target || (focus === "entry" && options.field && !options.match)) {
+        const focusRow = target ?? tbody.rows[0];
+        const field = options.field && focusRow?.querySelector('[data-record-field="' + options.field + '"]');
+        (field || focusRow?.querySelector("input, select"))?.focus();
+      }
     }
 
+    const initialPanel = Math.max(0, panels.findIndex(panel => panel.id === options.panel));
+    if (options.match && group === "gap" && options.panel === "tasks" && !data.tasks.some(matches)) {
+      const proposal = session.suggestions.find(matches);
+      if (proposal) data.tasks.push({ ...proposal });
+    }
     panels.forEach((panel, i) => tabs.append(makeButton(panel.label, () => showPanel(i), "record-tab")));
-    showPanel();
     body.replaceChildren(el("p", schema.note), version, tabs, content, results, access);
+    showPanel(initialPanel, "entry");
 
     async function submit(method) {
       const token = password.value.trim();
@@ -247,28 +298,49 @@ export function createRecordEditor(dialog, api, refresh) {
     }
   }
 
-  return async (group, record, part) => {
-    if (!record || dialog.open) return;
+  async function openSession(group, record, options) {
     const schema = recordGroups[group];
     title.textContent = schema.title + "录入";
     context.textContent = record.city + " · " + record.industry + " · " + record.period;
     const url = new URLSearchParams({ case: record.id, period: record.period, group });
-    if (group === "trace") url.set("part", part);
-    if (group === "trace") context.textContent += " · " + record.traceParts.find(item => item.id === part).label;
-    message.textContent = "";
+    if (group === "trace") {
+      url.set("part", options.part);
+      context.textContent += " · " + record.traceParts.find(item => item.id === options.part).label;
+    }
     footer.replaceChildren(makeButton("关闭", close));
     body.replaceChildren(el("p", "正在读取当期数据…", "loading"));
-    dialog.showModal();
     busy = true;
     try {
       const result = await request(url);
-      session = { ...result, schema, group, url, dirty: false };
+      session = { ...result, schema, group, url, options, dirty: false };
       draw(session);
-    } catch (error) {
+    } catch {
       body.replaceChildren(el("p", "录入接口暂未响应。请关闭窗口后重试。", "error"));
     } finally {
       busy = false;
     }
+  }
+
+  return (group, record, options = {}) => {
+    if (!record || dialog.open) return;
+    message.textContent = "";
+    const choosePart = group === "trace" && !record.traceParts.some(item => item.id === options.part);
+    if (choosePart) {
+      title.textContent = "选择要维护的部件";
+      context.textContent = record.city + " · " + record.industry + " · " + record.period;
+      const dropdown = el("select");
+      dropdown.setAttribute("aria-label", "追溯部件");
+      dropdown.append(new Option("请选择部件", ""), ...record.traceParts.map(part => new Option(part.label, part.id)));
+      const proceed = makeButton("继续录入", () => openSession(group, record, { ...options, part: dropdown.value }), "primary-button");
+      proceed.disabled = true;
+      dropdown.onchange = () => { proceed.disabled = !dropdown.value; };
+      body.replaceChildren(dropdown);
+      footer.replaceChildren(makeButton("关闭", close), proceed);
+      dialog.showModal();
+      return;
+    }
+    dialog.showModal();
+    openSession(group, record, options);
   };
 }
 

@@ -1,6 +1,7 @@
 import { renderScoreTrend } from "./score-trend.js";
 import { developmentDomain } from "./score-trend-model.js";
-import { el, number } from "./ui.js";
+import { el, number, recordButton, recordHeading } from "./ui.js";
+import { indicatorInputs } from "./record-schema.js";
 import {
   assembleResilienceCategories,
   selectResilienceCategories,
@@ -112,13 +113,17 @@ const columnLabels = {
   "chain-alert": ["预警等级", "触发证据", "触发时间", "核验状态"],
   bottleneck: ["供给状态", "供货缺口", "关联预警", "跟踪重点"],
 };
-function categoryDetail(category, actions) {
+function categoryDetail(category, actions, lens) {
   const detail = el("div", undefined, "resilience-category-detail");
   const heading = el("div", undefined, "resilience-detail-heading");
   heading.append(
     el("h4", category.label + " · 风险核验"),
     el("span", categoryStatus(category), "resilience-state"),
   );
+  const entry = indicatorInputs[lens];
+  const editCategory = recordButton("编辑本品类", () => actions.openRecord("resilience", {
+    panel: entry.panel, field: entry.field, match: { label: category.label },
+  }), "编辑" + category.label + "风险数据");
   const intro = el(
     "p",
     category.observation?.finding ??
@@ -180,7 +185,7 @@ function categoryDetail(category, actions) {
   else regions.append(el("p", "本期未收录来源集中突升明细。"));
   const alerts = el("section");
   alerts.append(el("h5", "关联预警"));
-  if (category.alerts.length)
+  if (category.alerts.length) {
     for (const alert of category.alerts)
       alerts.append(
         el(
@@ -197,9 +202,12 @@ function categoryDetail(category, actions) {
             "核验。",
         ),
       );
-  else alerts.append(el("p", "本期未触发断链预警。"));
+    alerts.append(recordButton("更新核验状态", () => actions.openRecord("resilience", {
+      panel: "review", field: "status", match: { label: category.label },
+    })));
+  } else alerts.append(el("p", "本期未触发断链预警。"));
   evidence.append(supply, suppliers, regions, alerts);
-  detail.append(heading, intro, evidence);
+  detail.append(recordHeading(heading, editCategory), intro, evidence);
   if (category.observation) {
     const observation = category.observation;
     detail.append(
@@ -255,12 +263,13 @@ export function renderResilience(data, actions) {
     attention: categories.filter((row) => row.attention).length,
     alerts: categories.filter((row) => row.alerts.length).length,
   };
+  const previousView = actions.resume?.resilience;
   const state = {
-    lens: metrics[0].id,
-    scope: "all",
-    query: "",
-    page: 1,
-    selected: null,
+    lens: metrics.some(metric => metric.id === previousView?.indicator) ? previousView.indicator : metrics[0].id,
+    scope: previousView?.scope || "all",
+    query: previousView?.query || "",
+    page: Number(previousView?.page) || 1,
+    selected: previousView?.selected || null,
   };
   const summary = el("article", undefined, "analysis-panel resilience-summary");
   const score = el("div", undefined, "resilience-score");
@@ -322,9 +331,13 @@ export function renderResilience(data, actions) {
   );
   const console = el("section", undefined, "analysis-panel resilience-console");
   const heading = el("div", undefined, "resilience-console-heading");
+  const addCategory = recordButton("录入需求与到货", () => {
+    const entry = indicatorInputs[state.lens];
+    actions.openRecord("resilience", entry);
+  });
   heading.append(
     el("h3", "关键品类统一清单"),
-    el("span", "覆盖全部 " + model.criticalCount + " 类关键品类"),
+    addCategory,
   );
   const tabs = el("nav", undefined, "resilience-metric-tabs");
   tabs.setAttribute("aria-label", "韧性分析五项指标");
@@ -342,6 +355,7 @@ export function renderResilience(data, actions) {
   search.id = "resilience-search";
   search.type = "search";
   search.placeholder = "输入名称";
+  search.value = state.query;
   label.append(search);
   tools.append(scopes, label);
   const caption = el("p", undefined, "resilience-result-count");
@@ -392,6 +406,9 @@ export function renderResilience(data, actions) {
   const renderRows = () => {
     const result = selectResilienceCategories(categories, state);
     state.page = result.page;
+    console.dataset.page = state.page;
+    console.dataset.scope = state.scope;
+    console.dataset.selected = state.selected ?? "";
     const columns = ["关键品类", ...columnLabels[state.lens]];
     const header = el("tr");
     for (const text of columns) {
@@ -433,7 +450,7 @@ export function renderResilience(data, actions) {
         const cell = el("td");
         cell.colSpan = columns.length;
         cell.id = "resilience-detail-" + category.id;
-        cell.append(categoryDetail(category, actions));
+        cell.append(categoryDetail(category, actions, state.lens));
         detailRow.append(cell);
         rows.push(detailRow);
       }
@@ -487,6 +504,8 @@ export function renderResilience(data, actions) {
   const renderMetric = () => {
     const metric = metrics.find((row) => row.id === state.lens);
     console.dataset.indicator = metric.id;
+    addCategory.textContent = indicatorInputs[metric.id].label;
+    addCategory.setAttribute("aria-label", addCategory.textContent);
     tabs
       .querySelectorAll("button")
       .forEach((node) =>
