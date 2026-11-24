@@ -2305,14 +2305,49 @@ button.trade-category-row:hover meter::-moz-meter-bar {
 #evaluation-selection {
   scroll-margin-top: 30px;
 }
-.supply-nav,
+.supply-nav {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 clamp(24px, 3vw, 36px);
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.supply-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  padding: 10px 8px;
+  border-radius: 7px;
+  color: #46535f;
+  font-size: clamp(17px, 1.65vw, 20px);
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+.supply-nav a:hover {
+  background: #f5f6f8;
+  color: var(--wine);
+}
+.supply-nav a[aria-current="page"] {
+  background: #f4e6eb;
+  color: var(--wine);
+  font-weight: 750;
+  box-shadow: inset 0 -3px var(--red);
+}
+.supply-nav a:focus-visible {
+  outline: 2px solid var(--wine);
+  outline-offset: -3px;
+}
 .gap-nav {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin: 0 0 26px;
 }
-.supply-nav a,
 .gap-nav button {
   font-size: 14px;
   color: #68737d;
@@ -2321,7 +2356,6 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   background: transparent;
   border-radius: 6px;
 }
-.supply-nav a[aria-current="page"],
 .gap-nav button[aria-pressed="true"] {
   background: #efe3e7;
   color: var(--wine);
@@ -2331,8 +2365,12 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   font-size: 14px;
   color: var(--red);
 }
-#supply-overview > .section-top h2 {
-  font-size: 19px;
+#supply > .section-top h2 {
+  font-size: clamp(25px, 2.8vw, 32px);
+}
+#supply > section > .section-top h2,
+#supply-indicators .indicator-workspace-heading h3 {
+  font-size: clamp(23px, 2.3vw, 28px);
 }
 #supply-overview > .section-top .section-kicker {
   display: none;
@@ -3064,7 +3102,14 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   .analysis-table {
     min-width: 650px;
   }
-  .supply-nav a,
+  .supply-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .supply-nav a {
+    min-height: 48px;
+    padding: 8px 5px;
+    font-size: 16px;
+  }
   .gap-nav button {
     font-size: 13px;
     padding: 7px 11px;
