@@ -77,7 +77,7 @@ test('public trace preserves part scope, disclosure denominators and unlocated n
 test('city and industry metadata scopes each available assessment', () => {
   const entries = listCases();
   const cities = new Set(entries.map(item => item.cityId));
-  assert.equal(cities.size, 3);
+  assert.equal(cities.size, 9);
   for (const cityId of cities) {
     const industries = entries.filter(item => item.cityId === cityId);
     assert.ok(industries.length >= 2);

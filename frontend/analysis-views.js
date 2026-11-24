@@ -241,16 +241,16 @@ function renderLogistics(data, actions) {
     const block = el("span");
     block.style.flex = item.share;
     block.dataset.mode = String(i);
-    block.title = item.label + " " + item.share + "%";
+    block.title = item.label + " " + number(item.share) + "%";
     stack.append(block);
-    legend.append(stat(item.label, item.share + "%"));
+    legend.append(stat(item.label, number(item.share) + "%"));
   });
   modes.append(
     stack,
     legend,
     el(
       "p",
-      model.modes[0].share > 70
+      (model.modes.find(item => item.label === "公路")?.share ?? 0) > 70
         ? "公路占比较高，可结合节点条件评估铁路或水运衔接。"
         : "运输方式结构较均衡，可继续核对换装时间和干线班期。",
       "analysis-reading",
@@ -326,8 +326,16 @@ function renderGap(data, actions) {
   const peers = el("select");
   peers.id = "benchmark-city";
   peers.setAttribute("aria-label", "同类产业对标城市");
-  for (const peer of model.peers)
-    peers.append(new Option(peer.city + " · " + peer.industry, peer.id));
+  for (const [sameProvince, label] of [[true, "省内城市"], [false, "跨省城市"]]) {
+    const candidates = model.peers.filter(peer => Boolean(peer.sameProvince) === sameProvince);
+    if (!candidates.length) continue;
+    const group = el("optgroup");
+    group.label = label;
+    for (const peer of candidates) group.append(new Option(
+      peer.city + (peer.cityGDPGapRate == null ? "" : " · GDP 相差 " + number(peer.cityGDPGapRate) + "%"), peer.id
+    ));
+    peers.append(group);
+  }
   const comparison = panel("与同类产业链比较");
   const selectLabel = el("label", "对标城市");
   selectLabel.append(peers);
@@ -444,7 +452,27 @@ function renderGap(data, actions) {
         : "三项分指数均达到或超过所选城市，继续跟踪关键环节与供应连续性。",
       "benchmark-reading",
     );
-    comparisonBody.replaceChildren(stage, verdict, reading);
+    const basis = el("p", peer.year
+      ? peer.year + " 年城市 GDP · " + model.current.city + " " + number(peer.currentGDP) + " 亿元 / " +
+        peer.city + " " + number(peer.cityGDP) + " 亿元 · 相差 " + number(peer.cityGDPGap) + " 亿元"
+      : "同产业城市对比", "benchmark-basis");
+    if (peer.source) {
+      for (const [label, href] of [["本市 GDP 来源", peer.currentSource], ["对标 GDP 来源", peer.source]]) {
+        const source = el("a", label);
+        source.href = href;
+        source.target = "_blank";
+        source.rel = "noopener";
+        basis.append(source);
+      }
+      const entry = el("a", "查看对标城市数据");
+      const url = new URL(location.href);
+      url.searchParams.set("city", peer.cityId);
+      url.searchParams.set("case", peer.id);
+      url.hash = "#gap";
+      entry.href = url;
+      basis.append(entry);
+    }
+    comparisonBody.replaceChildren(basis, stage, verdict, reading);
     renderIndicatorWorkspace(gapIndicators, data, "gap", actions, peer.id);
   };
   peers.onchange = showPeer;

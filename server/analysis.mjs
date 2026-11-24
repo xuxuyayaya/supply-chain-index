@@ -1,3 +1,4 @@
+import { cityBenchmarks, cityComparison, compareCities } from "./benchmark-cities.mjs";
 import { buildMonitoring } from "./monitoring.mjs";
 const round = (value) => Number(value.toFixed(1));
 const cityHubs = {
@@ -183,6 +184,7 @@ function comparison(record) {
   return {
     id: record.id,
     city: record.city,
+    cityId: record.cityId,
     industry: record.industry,
     period: record.period,
     development: record.evaluation.development,
@@ -194,10 +196,10 @@ function comparison(record) {
   };
 }
 
-export function buildAnalysis(record, peers, history, peerHistory = {}) {
+export function buildAnalysis(record, peers, history, peerHistory = {}, manual = {}) {
   const ev = record.evaluation;
   const inputs = industryInputs[record.industryId];
-  const hubs = cityHubs[record.cityId];
+  const hubs = cityHubs[record.cityId] ?? cityBenchmarks[record.cityId].hubs;
   const metrics = coreMetrics(record);
   const components = [
     {
@@ -214,7 +216,7 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
       weight: 0.3,
     },
   ];
-  const volume = round(record.trade.purchase * 0.63);
+  const baseVolume = round((ev.modelPurchase ?? record.trade.purchase) * 0.63);
   const previous = history.find((item) => item.period < record.period);
   const quarter = Math.ceil(Number(record.period.slice(5)) / 3);
   const deadline = new Date(
@@ -267,6 +269,7 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
       alternatives,
       traceId: inputs.traceIds[i] ?? null,
       supplier: label + "供应商",
+      originCity: inputs.origins[i % inputs.origins.length][0],
       signals: [
         purchaseDrop >= 20 ? "采购回落" : "采购变化",
         arrivalRate < 85 ? "到货偏慢" : "到货待跟踪",
@@ -284,8 +287,8 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
       ],
     };
   });
-  const inboundVolume = round(volume * 0.6);
-  const outboundVolume = round(volume - inboundVolume);
+  const baseInbound = round(baseVolume * 0.6);
+  const baseOutbound = round(baseVolume - baseInbound);
   const split = (total, shares) => {
     let allocated = 0;
     return shares.map((share, i) => {
@@ -298,10 +301,10 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
     });
   };
   const inboundAmounts = split(
-    inboundVolume,
+    baseInbound,
     inputs.origins.map((item) => item[1]),
   );
-  const outboundAmounts = split(outboundVolume, [42, 33, 25]);
+  const outboundAmounts = split(baseOutbound, [42, 33, 25]);
   const inbound = inputs.origins.map(([city, share], i) => ({
     id: "in-" + i,
     direction: "原料进货",
@@ -342,28 +345,28 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
     ][i],
     volume: outboundAmounts[i],
   }));
-  const routes = [...inbound, ...outbound];
-  let shareAllocated = 0;
-  const modes = ["公路", "铁路", "水公联运", "铁公联运"].map((label, i) => {
-    const share =
-      i === 3
-        ? round(100 - shareAllocated)
-        : round(
-            (routes
-              .filter((row) => row.mode === label)
-              .reduce((sum, row) => sum + row.volume, 0) /
-              volume) *
-              100,
-          );
-    shareAllocated += share;
-    return { label, share };
-  });
+  const routes = manual.routes ? manual.routes.routes.map((row, i) => ({
+    ...row, id: "line-" + i,
+    path: [row.origin, ...row.via.split("/").map(node => node.trim()).filter(Boolean), row.destination]
+  })) : [...inbound, ...outbound];
+  const volumeOf = (rows) => rows.reduce((sum, row) => sum + row.volume, 0);
+  const volume = volumeOf(routes);
+  const incoming = routes.filter(row => row.direction === "原料进货");
+  const inboundVolume = manual.routes ? volumeOf(incoming) : baseInbound;
+  const outboundVolume = manual.routes ? volumeOf(routes.filter(row => row.direction === "成品发运")) : baseOutbound;
+  const share = (value, total) => total > 0 ? 100 * value / total : 0;
+  const modes = [...new Set(routes.map(row => row.mode))].map(label => ({
+    label, share: share(volumeOf(routes.filter(row => row.mode === label)), volume)
+  }));
+  const origins = manual.routes ? [...new Set(incoming.map(row => row.origin))].map(city => ({
+    city, share: share(volumeOf(incoming.filter(row => row.origin === city)), inboundVolume)
+  })).sort((a,b) => b.share - a.share) : inputs.origins.map(([city, share]) => ({ city, share }));
   const weakest = [...components].sort((a, b) => a.score - b.score)[0];
   const change = previous
     ? ev.development - previous.evaluation.development
     : null;
   const analysis = {
-    version: "5.2",
+    version: "5.3",
     development: {
       score: ev.development,
       components,
@@ -376,13 +379,15 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
       score: ev.logistics,
       volume,
       modes,
-      origins: inputs.origins.map(([city, share]) => ({ city, share })),
+      origins,
       routes,
       inboundVolume,
       outboundVolume,
       metrics: metrics.filter((item) => item.view === "logistics"),
-      documentConnectivity: Math.max(50, Math.min(95, ev.ontime - 8)),
-      nodes: [
+      documentConnectivity: manual.logistics
+        ? share(manual.logistics.connected, manual.logistics.documents)
+        : Math.max(50, Math.min(95, ev.ontime - 8)),
+      nodes: manual.logistics?.nodes ?? [
         { name: hubs[0], role: "集货与配送" },
         { name: hubs[1], role: "铁路干线衔接" },
         { name: hubs[2], role: "港口集疏运" },
@@ -399,8 +404,8 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
       peerHistory,
       current: comparison(record),
       peers: peers
-        .map(comparison)
-        .sort((a, b) => b.development - a.development),
+        .map(peer => ({ ...comparison(peer), ...cityComparison(record.cityId, peer.cityId) }))
+        .sort(compareCities),
       problems,
       metrics,
       previous: previous ? comparison(previous) : null,
@@ -479,6 +484,6 @@ export function buildAnalysis(record, peers, history, peerHistory = {}) {
       })),
     },
   };
-  analysis.indicators = buildMonitoring(record, analysis, inputs.goods);
+  analysis.indicators = buildMonitoring(record, analysis, inputs.goods, manual);
   return analysis;
 }

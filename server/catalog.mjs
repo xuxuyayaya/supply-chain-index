@@ -1,3 +1,4 @@
+import { cityBenchmarks } from "./benchmark-cities.mjs";
 import { extendMonthlyHistory } from "./monthly-history.mjs";
 import { buildAnalysis } from './analysis.mjs';
 import { assessSupply } from './assessment.mjs';
@@ -111,6 +112,34 @@ const contexts = {
     [18,80,78,5,20,.06,8.1,9.2,82], [19,78,77,6,20,.07,7.8,9.0,81]
   ] }
 };
+// Operational figures for the new peer cities follow the same monthly model.
+const anchorCities = { 河南: 'kaifeng', 江苏: 'suzhou', 江西: 'nanchang' };
+const roundInput = (value) => Number(value.toFixed(2));
+for (const [cityId, city] of Object.entries(cityBenchmarks).filter(([,city]) => city.hubs)) {
+  const templates = cases.filter(entry => entry.cityId === anchorCities[city.province]);
+  for (const base of templates) {
+    const context = base.context ?? contexts[base.id];
+    const shifted = (value, delta, min, max) => Math.min(max, Math.max(min, value + delta));
+    cases.push({
+      ...base, id: cityId + '-' + base.industryId, cityId, city: city.name,
+      name: city.name.replace(/市$/, '') + ' · ' + base.industry, region: city.province + ' · ' + city.name.replace(/市$/, ''),
+      template: base.template ?? base.id,
+      periods: base.periods.map(([period, covered, stages, purchase, local, sales, rank, leader]) => [
+        period, shifted(covered, Math.sign(city.strength), 1, stages), stages,
+        roundInput(purchase * city.size), roundInput(local * city.size), roundInput(sales * city.size),
+        rank.map(value => roundInput(value * city.size)), roundInput(leader - city.strength / 100),
+      ]),
+      context: {
+        ...context, revenue: roundInput(context.revenue * city.size),
+        months: context.months.map(([cost, ontime, safety, bottlenecks, total, imports, addedValue, peerValue, peerIndex]) => [
+          cost - Math.sign(city.strength), shifted(ontime, city.strength, 1, 99), shifted(safety, city.strength, 1, 99),
+          shifted(bottlenecks, -Math.sign(city.strength), 0, total), total, imports,
+          roundInput(addedValue * city.size), peerValue, peerIndex,
+        ]),
+      },
+    });
+  }
+}
 for (const entry of cases) extendMonthlyHistory(entry, entry.context ?? contexts[entry.id]);
 
 const stagesByCity = {
@@ -141,21 +170,45 @@ function indicator(id, name, numerator, denominator, direction, weight, note) {
   };
 }
 
-export function getCase(id, period) {
+export function getCase(id, period, records = {}, includePrevious = true) {
   const entry = cases.find(item => item.id === id);
   const row = entry?.periods.find(([name]) => name === period) ?? (period ? undefined : entry?.periods[0]);
   if (!entry || !row) return null;
   const [date, covered, stages, purchase, local, sales, rank, leader] = row;
+  const manual = records[id]?.[date]?.groups ?? {};
+  const supply = manual.supply;
+  const fulfilment = manual.logistics;
+  const keyCategories = manual.resilience?.categories;
   const context = entry.context ?? contexts[id];
   const rowIndex = entry.periods.indexOf(row);
-  const [cost, ontime, safety, bottlenecks, keyGoods, importRate, addedValue, peerValue, peerIndex] = context.months[rowIndex];
-  const total = purchase + sales;
-  const topFive = rank.reduce((sum, value) => sum + value, 0);
+  const [baseCost, baseOntime, baseSafety, baseBottlenecks, baseKeyGoods, importRate, baseAddedValue, peerValue, peerIndex] = context.months[rowIndex];
+  const pct = (a,b) => Number((a/b*100).toFixed(8));
+  const cost = fulfilment ? pct(fulfilment.cost, fulfilment.output) : baseCost;
+  const ontime = fulfilment ? pct(fulfilment.onTime, fulfilment.tickets) : baseOntime;
+  const safety = fulfilment ? Math.max(0, 100 - 20 * pct(fulfilment.loss, fulfilment.tickets)) : baseSafety;
+  const bottlenecks = keyCategories ? keyCategories.filter(item => item.demand > item.delivered).length : baseBottlenecks;
+  const keyGoods = keyCategories?.length ?? baseKeyGoods;
+  const addedValue = manual.gap?.addedValue ?? baseAddedValue;
+  const origins = supply ? [
+    { label: '本地', amount: supply.local }, { label: '国内其他地区', amount: supply.domestic }, { label: '进口', amount: supply.imports }
+  ] : [
+    { label: '本地', amount: local },
+    { label: '国内其他地区', amount: purchase - local - Number((purchase*importRate).toFixed(2)) },
+    { label: '进口', amount: Number((purchase*importRate).toFixed(2)) }
+  ];
+  const purchaseTotal = supply ? origins.reduce((sum, item) => sum + item.amount, 0) : purchase;
+  const salesTotal = supply?.sales ?? sales;
+  const total = purchaseTotal + salesTotal;
+  const suppliers = (supply?.suppliers ?? rank.map((amount, i) => ({label: context.procurement[i] + '供应商', amount})))
+    .map(item => ({ ...item, percent: pct(item.amount, purchaseTotal) }))
+    .sort((a,b) => b.amount - a.amount);
+  const topFive = Math.min(purchaseTotal, suppliers.slice(0, 5).reduce((sum, item) => sum + item.amount, 0));
+  const stageRows = supply?.stages ?? stagesByCity[entry.template ?? id].map((label,i) => ({ label, covered: i < covered }));
   const metrics = [
-    indicator('coverage', '环节覆盖率', covered, stages, 'positive', .3, '本地具备产能或周边可稳定供货的环节数 ÷ 全部关键环节数。部件目录用于查证路径，同一环节可包含多个部件。'),
-    indicator('local', '本地配套率', local, purchase, 'positive', .3, '链主向本市供应商采购金额 ÷ 当月链主采购总额，金额单位为亿元。'),
-    indicator('cr5', '供应商集中度', topFive, purchase, 'negative', .2, '按采购额排序的前五家供应商采购金额 ÷ 当月采购总额，金额单位为亿元。'),
-    indicator('leader', '龙头依赖度', Number((leader * context.revenue).toFixed(2)), context.revenue, 'negative', .2, '链主营收 ÷ 同地区、同产业、同月度链上企业营收总额。金额单位为亿元。')
+    indicator('coverage', '环节覆盖率', stageRows.filter(item => item.covered).length, stageRows.length, 'positive', .3, '本地具备产能或周边可稳定供货的环节数 ÷ 全部关键环节数。部件目录用于查证路径，同一环节可包含多个部件。'),
+    indicator('local', '本地配套率', origins[0].amount, purchaseTotal, 'positive', .3, '链主向本市供应商采购金额 ÷ 当月链主采购总额，金额单位为亿元。'),
+    indicator('cr5', '供应商集中度', topFive, purchaseTotal, 'negative', .2, '按采购额排序的前五家供应商采购金额 ÷ 当月采购总额，金额单位为亿元。'),
+    indicator('leader', '龙头依赖度', supply?.leader ?? Number((leader * context.revenue).toFixed(2)), supply?.revenue ?? context.revenue, 'negative', .2, '链主营收 ÷ 同地区、同产业、同月度链上企业营收总额。金额单位为亿元。')
   ];
   for (const item of metrics) {
     const { limits, goal, action } = criteria[item.id];
@@ -171,24 +224,21 @@ export function getCase(id, period) {
   const resilience = 100 * (1-bottlenecks/keyGoods);
   const development = index === null ? null : logistics*.3 + index*.4 + resilience*.3;
   const previousRow = entry.periods[rowIndex+1];
-  const previous = previousRow ? getCase(id, previousRow[0]) : null;
-  const imports = Number((purchase*importRate).toFixed(2));
+  const previous = includePrevious && previousRow ? getCase(id, previousRow[0], records, false) : null;
   const partTotal = entry.parts.reduce((sum, part) => sum + part[2], 0);
-  const categories = entry.parts.map(([partId, label, amount]) => ({
+  const categories = (supply?.categories.map((item, i) => ({ ...item, id: item.traceId || 'edited-' + i })) ?? entry.parts.map(([partId, label, amount]) => ({
     id: partId, label, amount: amount / partTotal * total,
     traceId: ['steel', 'other'].includes(partId) ? null : partId
-  })).sort((a, b) => b.amount - a.amount);
+  }))).sort((a, b) => b.amount - a.amount);
   const record = {
     ...listCases().find(item => item.id === id),
-    period: date, mode: 'modelled', version: '3.1', source, index, metrics,
+    period: date, mode: Object.keys(manual).length ? 'edited' : 'modelled', version: '3.1', source, index, metrics,
     evaluation: { previous: previous ? { period: previous.period, score: previous.index } : null,
       logistics, cost, ontime, safety, resilience, bottlenecks, keyGoods, development,
-      addedValue, peerValue, peerIndex },
-    stages: stagesByCity[entry.template ?? id].map((label,i) => ({ label, covered: i < covered })),
+      addedValue, peerValue, peerIndex, modelPurchase: purchase },
+    stages: stageRows,
     trade: {
-      purchase, sales, total, categories, topFive,
-      suppliers: rank.map((amount, i) => ({ label: context.procurement[i] + '供应商', amount, percent: amount / purchase * 100 })),
-      origins: [{ label: '本地', amount: local }, { label: '国内其他地区', amount: purchase - local - imports }, { label: '进口', amount: imports }]
+      purchase: purchaseTotal, sales: salesTotal, total, categories, topFive, suppliers, origins
     },
     traceParts: id === 'kaifeng-auto' ? Object.values(kaifengTrace).map(({partId, label}) => ({id: partId, label})) : entry.parts.filter(([partId]) => !['steel', 'other'].includes(partId)).map(([partId, label]) => ({ id: partId, label }))
   };
@@ -203,21 +253,48 @@ const traceLocations = {
   'kaifeng': [['武汉',114.31,30.59],['芜湖',118.38,31.33],['郑州',113.63,34.75],['开封',114.31,34.80],['合肥',117.23,31.82]]
 };
 
-export function getIndex(id, period, partId) {
-  const record = getCase(id, period);
+export function getIndex(id, period, partId, records = {}) {
+  const record = getCase(id, period, records);
   if (!record) return null;
   const part = partId ?? record.traceParts[0]?.id;
-  const trace = part ? getTrace(id, part) : null;
+  const trace = part ? getTrace(id, part, record.period, records) : null;
   if (part && !trace) return null;
-  const peers = listCases().filter(item=>item.industryId===record.industryId && item.id!==id).map(item=>getCase(item.id,record.period)).filter(Boolean);
-  const history = record.periods.filter(month=>month<=record.period).map(month=>getCase(id,month));
-  const peerHistory = Object.fromEntries(peers.map(peer=>[peer.id, peer.periods.filter(month=>month<=record.period).map(month=>{const item=getCase(peer.id,month);return {period:item.period,development:item.evaluation.development,logistics:item.evaluation.logistics,supply:item.index,resilience:item.evaluation.resilience};})]));
-  return { ...record, trace, analysis: buildAnalysis(record,peers,history,peerHistory) };
+  const peers = listCases().filter(item=>item.industryId===record.industryId && item.id!==id).map(item=>getCase(item.id,record.period, records, false)).filter(Boolean);
+  const history = record.periods.filter(month=>month<=record.period).map(month=>getCase(id,month, records, false));
+  const peerHistory = Object.fromEntries(peers.map(peer=>[peer.id, peer.periods.filter(month=>month<=record.period).map(month=>{const item=getCase(peer.id,month, records, false);return {period:item.period,development:item.evaluation.development,logistics:item.evaluation.logistics,supply:item.index,resilience:item.evaluation.resilience};})]));
+  return { ...record, trace, analysis: buildAnalysis(record, peers, history, peerHistory, records[id]?.[record.period]?.groups) };
 }
 
-export function getTrace(id, partId) {
+export function getTrace(id, partId, period, records = {}) {
+  if (id === 'kaifeng-auto' && partId === 'all') return allKaifengParts(period, records);
+  const base = baseTrace(id, partId);
+  const edit = records[id]?.[period]?.groups?.['trace-' + partId];
+  if (!base || !edit) return base;
+  return {
+    ...base,
+    source: { ...base.source, note: edit.note },
+    nodes: edit.nodes.map(({ lng, lat, sourceUrl, sourceLabel, ...node }) => {
+      const original = base.nodes.find(item => item.id === node.id);
+      const supplement = sourceUrl ? { url: sourceUrl, label: sourceLabel || '补充资料' } : null;
+      return {
+        ...original, ...node, supplement,
+        ...(supplement ? { sources: [...(original?.sources ?? base.sources ?? []), supplement] } : {}),
+        position: lng === null ? null : [lng, lat]
+      };
+    }),
+    edges: edit.edges.map(({from, to, status, share, year, basis}) => {
+      const original = base.edges.find(edge => edge.from === from && edge.to === to);
+      const unchanged = original && (original.status === 'association') === (status === '关联');
+      return {
+        ...original, from, to, share, year, basis,
+        status: unchanged ? original.status : status === '关联' ? 'association' : 'modelled'
+      };
+    })
+  };
+}
+
+function baseTrace(id, partId) {
   if (id === 'kaifeng-auto') {
-    if (partId === 'all') return allKaifengParts();
     return Object.hasOwn(kaifengTrace, partId) ? kaifengTrace[partId] : null;
   }
   const entry = cases.find(item => item.id === id);
@@ -229,7 +306,10 @@ export function getTrace(id, partId) {
   }));
   nodes.push({ id: 'tier-1b', label: part[1] + ' · 备选组件厂', tier: 2, place: '跨区配套区' });
   nodes.forEach((node, i) => {
-    const [city, lng, lat] = traceLocations[entry.cityId][i];
+    const profile = cityBenchmarks[entry.cityId];
+    const locations = traceLocations[entry.cityId] ?? traceLocations[anchorCities[profile.province]];
+    const [city, lng, lat] = i === 3 && profile.coordinates
+      ? [profile.name.replace(/市$/, ''), ...profile.coordinates] : locations[i];
     Object.assign(node, { city, position: [lng, lat] });
   });
   const edges = [
@@ -240,11 +320,12 @@ export function getTrace(id, partId) {
 }
 
 // Retain the part on every node and edge so a role in one chain cannot imply an order in another.
-function allKaifengParts() {
+function allKaifengParts(period, records) {
   const trace = { partId: 'all', label: '全品类', nodes: [], edges: [], source: { note: '各路径按原部件范围归集。点选企业可查看该品类的披露资料。' } };
-  for (const part of Object.values(kaifengTrace)) {
+  for (const partId of Object.keys(kaifengTrace)) {
+    const part = getTrace('kaifeng-auto', partId, period, records);
     const key = id => part.partId + '/' + id;
-    for (const node of part.nodes) trace.nodes.push({ ...node, id:key(node.id), partLabel:part.label, sources:part.sources });
+    for (const node of part.nodes) trace.nodes.push({ ...node, id:key(node.id), partLabel:part.label, sources:node.sources ?? part.sources });
     for (const edge of part.edges) trace.edges.push({ ...edge, from:key(edge.from), to:key(edge.to) });
   }
   return trace;

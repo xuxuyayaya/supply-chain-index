@@ -110,6 +110,7 @@
       <div id="workspace-content" hidden>
         <div id="selection-required" hidden class="selection-required">
           <h2 id="selection-required-title"></h2>
+          <div class="scene-purpose" data-purpose="selection"></div>
           <p>请先选择城市，再选择产业链，查看该界面的完整分析。</p>
         </div>
         <nav class="scene-nav" aria-label="四视图分析导航">
@@ -124,8 +125,8 @@
         <section id="overview" aria-labelledby="development-title">
           <div class="section-top">
             <div>
-              <p class="section-kicker">一个总指数，判断整体发展质量</p>
               <h2 id="development-title">产业链发展总览</h2>
+              <div class="scene-purpose"><strong>看全局</strong><p>看总指数和月度走势，判断产业链的发展质量与当前短板。</p></div>
             </div>
             <span id="development-context" class="context-label"></span>
           </div>
@@ -144,19 +145,23 @@
         <section id="logistics" aria-labelledby="logistics-title" hidden>
           <div class="section-top">
             <div>
-              <p class="section-kicker">摸流向 · 物流数据</p>
               <h2 id="logistics-title">产业链物流分析</h2>
+              <div class="scene-purpose"><strong>摸流向</strong><p>看原料从哪里进、成品往哪里运，找出主要线路和交付瓶颈。</p></div>
             </div>
           </div>
+          <div class="record-entry"><button type="button" data-record="routes">录入货流与线路</button><button type="button" data-record="logistics">录入节点与履约</button></div>
           <div id="logistics-content"></div>
         </section>
         <section id="supply" aria-labelledby="supply-title" hidden>
           <div class="section-top">
             <div>
-              <p class="section-kicker">数供应 · 贸易数据</p>
               <h2 id="supply-title">产业链供应分析</h2>
+              <div class="scene-purpose"><strong>数供应</strong><p>看谁在供货、本地能配套多少，沿关键部件追溯上游来源。</p></div>
             </div>
-            <a class="view-text-link" href="#trace">进入供应链追溯</a>
+            <div class="record-entry">
+              <button type="button" data-record="supply">录入采购与配套</button>
+              <a class="view-text-link" href="#trace">进入供应链追溯</a>
+            </div>
           </div>
           <nav class="supply-nav" aria-label="供应分析下钻">
             <a href="#supply" data-screen="supply">配套能力</a
@@ -206,6 +211,7 @@
             <div id="trade-content"></div>
           </section>
           <section id="trace" aria-labelledby="trace-title" hidden>
+            <div class="record-entry"><button type="button" data-record="trace">录入追溯节点与关系</button></div>
             <div class="section-top">
               <div>
                 <p class="section-kicker">供应资源</p>
@@ -288,19 +294,21 @@
         <section id="resilience" aria-labelledby="resilience-title" hidden>
           <div class="section-top">
             <div>
-              <p class="section-kicker">判韧性 · 物流与贸易交叉核验</p>
               <h2 id="resilience-title">产业链韧性分析</h2>
+              <div class="scene-purpose"><strong>判韧性</strong><p>看哪些品类可能断供、风险出在哪里，以及有哪些备选供方和线路。</p></div>
             </div>
           </div>
+          <div class="record-entry"><button type="button" data-record="resilience">录入保供与预警</button></div>
           <div id="resilience-content"></div>
         </section>
         <section id="gap" aria-labelledby="gap-title" hidden>
           <div class="section-top">
             <div>
-              <p class="section-kicker">量差距 · 同类产业对比</p>
               <h2 id="gap-title">产业链差距分析</h2>
+              <div class="scene-purpose"><strong>量差距</strong><p>和同省相近城市看同类产业的差距，明确优先改进什么、如何复算。</p></div>
             </div>
           </div>
+          <div class="record-entry"><button type="button" data-record="gap">录入增加值与改进任务</button></div>
           <div id="gap-content"></div>
         </section>
       </div>
@@ -329,6 +337,15 @@
         <div id="calculation-content"></div>
         <div id="calculation-actions"></div>
       </div>
+    </dialog>
+    <dialog id="record-dialog" aria-labelledby="record-title">
+      <header class="record-header">
+        <div><p class="record-context"></p><h2 id="record-title"></h2></div>
+        <button type="button" class="record-close" aria-label="关闭数据录入">×</button>
+      </header>
+      <div class="record-body"></div>
+      <p class="record-message" role="status"></p>
+      <div class="record-footer"></div>
     </dialog>
     <footer class="wrap footer">
       <span>全国物流网 · 产业链协同</span

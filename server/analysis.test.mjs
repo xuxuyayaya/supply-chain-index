@@ -9,7 +9,7 @@ test('all monthly development assessments reconcile to the eight scoring inputs'
   for (const entry of listCases()) for (const period of entry.periods) {
     const record = getIndex(entry.id, period);
     const model = record.analysis;
-    assert.equal(model.version, '5.2');
+    assert.equal(model.version, '5.3');
     assert.equal(model.gap.metrics.length, 8);
     near(model.gap.metrics.reduce((sum, m) => sum + m.weight * m.viewWeight, 0), 1);
     near(model.development.components.reduce((sum, m) => sum + m.weight * m.score, 0), model.development.score);

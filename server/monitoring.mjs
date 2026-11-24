@@ -13,7 +13,7 @@ const groupSum = (rows, key, field) =>
       .reduce((total, row) => total + row[field], 0),
   }));
 
-export function buildMonitoring(record, model, goods) {
+export function buildMonitoring(record, model, goods, manual) {
   const { logistics, resilience, gap } = model;
   const ev = record.evaluation;
   const items = [];
@@ -63,13 +63,15 @@ export function buildMonitoring(record, model, goods) {
     ...row,
     origin: row.path[0],
     destination: row.path.at(-1),
-    distance: 360 + i * 175,
-    tonnes: Math.round(row.volume * 10000),
+    distance: row.distance ?? 360 + i * 175,
+    tonnes: row.volume * 10000,
   }));
-  const topFive = [...routes]
-    .sort((a, b) => b.volume - a.volume)
-    .slice(0, 5)
-    .reduce((total, row) => total + row.volume, 0);
+  const odVolumes = new Map();
+  for (const row of routes) {
+    const key = JSON.stringify([row.origin, row.destination]);
+    odVolumes.set(key, (odVolumes.get(key) ?? 0) + row.volume);
+  }
+  const topFive = [...odVolumes.values()].sort((a, b) => b - a).slice(0, 5).reduce((total, volume) => total + volume, 0);
   const routeCr5 = pct(topFive, logistics.volume);
   logistics.routeCr5 = routeCr5;
   add(
@@ -82,7 +84,7 @@ export function buildMonitoring(record, model, goods) {
     "按起点—终点识别主力线路，观察货流规模及运力集中程度。",
     "OD对＝起点×终点；线路CR5＝前五条线路运量÷总运量×100%",
     `${n(topFive)} ÷ ${n(logistics.volume)} × 100% ＝ ${n(routeCr5)}%`,
-    `${routes.length} 条OD线路，前五条承担 ${n(routeCr5)}% 的货流。`,
+    `${odVolumes.size} 条OD线路，前五条承担 ${n(routeCr5)}% 的货流。`,
     ["起点", "终点", "途经节点", "月运量（万吨）", "占总运量"],
     routes.map((r) => [
       r.origin,
@@ -101,11 +103,14 @@ export function buildMonitoring(record, model, goods) {
   );
   const cargo = groupSum(routes, "goods", "volume").map((row, i) => ({
     ...row,
-    lastYear: round(row.value / (1.04 + i * 0.025)),
+    lastYear: manual.routes
+      ? manual.routes.lastYear.find(prior => prior.goods === row.label)?.volume ?? null
+      : round(row.value / (1.04 + i * 0.025)),
     trips: Math.round((row.value * 10000) / 20),
     capacity: 20,
   }));
-  const lastYearVolume = sum(cargo, "lastYear");
+  const lastYearVolume = manual.routes ? sum(manual.routes.lastYear, "volume") : sum(cargo, "lastYear");
+  const yearChange = (value, prior) => prior > 0 ? delta((value / prior - 1) * 100) + "%" : "缺少可比基期";
   const flows = cargo.flatMap((c) =>
     routes
       .filter((r) => r.goods === c.label)
@@ -144,7 +149,7 @@ export function buildMonitoring(record, model, goods) {
     "万吨",
     "按品类观察当期运量规模，并与上年同月比较放量和收缩。",
     "月运量＝Σ车次×实载；同比＝（本月运量−上年同月运量）÷上年同月运量×100%",
-    `${n(logistics.volume)} 万吨 ÷ ${n(lastYearVolume)} 万吨 − 1 ＝ ${n((logistics.volume / lastYearVolume - 1) * 100)}%`,
+    `${n(logistics.volume)} 万吨 / 上年同期 ${n(lastYearVolume)} 万吨，变动 ${yearChange(logistics.volume, lastYearVolume)}`,
     `${record.period} 对比 ${Number(record.period.slice(0, 4)) - 1}${record.period.slice(4)}；折算车次统一按20吨实载统计。`,
     [
       "品类",
@@ -157,14 +162,14 @@ export function buildMonitoring(record, model, goods) {
     cargo.map((c) => [
       c.label,
       n(c.value),
-      n(c.lastYear),
-      delta((c.value / c.lastYear - 1) * 100) + "%",
+      c.lastYear === null ? "—" : n(c.lastYear),
+      yearChange(c.value, c.lastYear),
       n(c.trips),
       "20",
     ]),
     {
       secondary:
-        "同比 " + delta((logistics.volume / lastYearVolume - 1) * 100) + "%",
+        "同比 " + yearChange(logistics.volume, lastYearVolume),
       bars: cargo.map((c) => ({
         label: c.label,
         value: c.value,
@@ -178,7 +183,7 @@ export function buildMonitoring(record, model, goods) {
       },
     },
   );
-  const nodes = logistics.nodes.map((node, i) => ({
+  const nodes = manual.logistics?.nodes ?? logistics.nodes.map((node, i) => ({
     ...node,
     reachable: !(i === 1 && ev.ontime < 85),
     hours: 12 + i * 6,
@@ -203,7 +208,7 @@ export function buildMonitoring(record, model, goods) {
       row.hours + " 小时",
       row.reachable ? "保持班期衔接" : "协调备用线路并复核恢复时间",
     ]),
-    { raw: { reachable, total: nodes.length } },
+    { raw: { reachable, total: nodes.length, nodes } },
   );
   const modeLabels = ["公路", "铁路", "水运", "航空", "多式联运"];
   const modes = modeLabels.map((label) => ({
@@ -235,10 +240,10 @@ export function buildMonitoring(record, model, goods) {
       raw: { modes, total: logistics.volume },
     },
   );
-  const output = round(
+  const output = manual.logistics?.output ?? round(
     record.metrics.find((m) => m.id === "leader").denominator * 1.08,
   );
-  const cost = (output * ev.cost) / 100;
+  const cost = manual.logistics?.cost ?? (output * ev.cost) / 100;
   const turnover = routes.reduce(
     (total, r) => total + r.tonnes * r.distance,
     0,
@@ -253,7 +258,7 @@ export function buildMonitoring(record, model, goods) {
     "物流总费用占同期产业产值的比例，同时核对线路运价。",
     "物流费用占比＝物流总费用÷产值×100%；线路运价＝运费÷周转量（吨公里）",
     `${n(cost)} ÷ ${n(output)} × 100% ＝ ${n(ev.cost)}%；标准分＝100−${n(ev.cost)}＝${n(100 - ev.cost)}`,
-    "费用覆盖运输、仓储和物流管理；线路运费按物流费用的35%归集。",
+    manual.routes ? "线路运费采用逐条录入数据。" : "费用覆盖运输、仓储和物流管理；线路运费按物流费用的35%归集。",
     [
       "线路",
       "运距（公里）",
@@ -263,20 +268,20 @@ export function buildMonitoring(record, model, goods) {
     ],
     routes.map((r) => {
       const t = r.tonnes * r.distance;
-      const freight = (cost * 1e8 * 0.35 * t) / turnover;
+      const freight = r.freight == null ? (turnover ? (cost * 1e8 * 0.35 * t) / turnover : 0) : r.freight * 10000;
       return [
         r.origin + "—" + r.destination,
         n(r.distance),
         n(t / 10000),
         n(freight / 10000),
-        n(freight / t),
+        t ? n(freight / t) : "—",
       ];
     }),
     { raw: { numerator: cost, denominator: output } },
   );
-  const tickets = 10000,
-    onTime = (tickets * ev.ontime) / 100,
-    averageHours = round(24 + (100 - ev.ontime) * 0.6);
+  const tickets = manual.logistics?.tickets ?? 10000;
+  const onTime = manual.logistics?.onTime ?? (tickets * ev.ontime) / 100;
+  const averageHours = manual.logistics ? manual.logistics.hours / tickets : round(24 + (100 - ev.ontime) * 0.6);
   add(
     7,
     "logistics",
@@ -301,8 +306,8 @@ export function buildMonitoring(record, model, goods) {
     ],
     { raw: { numerator: onTime, denominator: tickets, averageHours } },
   );
-  const lossRate = (100 - ev.safety) / 20,
-    lossTickets = round((tickets * lossRate) / 100);
+  const lossRate = manual.logistics ? pct(manual.logistics.loss, tickets) : (100 - ev.safety) / 20;
+  const lossTickets = manual.logistics?.loss ?? round((tickets * lossRate) / 100);
   add(
     8,
     "logistics",
@@ -312,7 +317,7 @@ export function buildMonitoring(record, model, goods) {
     "%",
     "以发生货损或货差的运单占比衡量交付质量，同一运单不重复计数。",
     "货损货差率＝异常运单数÷总运单数×100%；安全标准分＝max(0,100−20×货损货差率百分数)",
-    `${n(lossTickets)} ÷ ${n(tickets)} × 100% ＝ ${n(lossRate)}%；100−20×${n(lossRate)}＝${n(ev.safety)} 分`,
+    `${n(lossTickets)} ÷ ${n(tickets)} × 100% ＝ ${n(lossRate)}%；max(0,100−20×${n(lossRate)})＝${n(ev.safety)} 分`,
     "原始货损货差率越低越好。安全标准分按统一评分曲线换算后进入物流分。",
     ["运单分类", "票数", "占比"],
     [
@@ -326,7 +331,8 @@ export function buildMonitoring(record, model, goods) {
       raw: { numerator: lossTickets, denominator: tickets, lossRate },
     },
   );
-  const connected = (tickets * logistics.documentConnectivity) / 100;
+  const documents = manual.logistics?.documents ?? tickets;
+  const connected = manual.logistics?.connected ?? (documents * logistics.documentConnectivity) / 100;
   add(
     9,
     "logistics",
@@ -336,19 +342,19 @@ export function buildMonitoring(record, model, goods) {
     "%",
     "上下游应互通单证中已完成关联互通的比例。",
     "单证互通率＝已互通单证数÷应互通单证数×100%",
-    `${n(connected)} ÷ ${n(tickets)} × 100% ＝ ${n(logistics.documentConnectivity)}%`,
-    `${n(tickets - connected)} 份单证仍待互通，重点补齐订单、运单、签收单的关联。`,
+    `${n(connected)} ÷ ${n(documents)} × 100% ＝ ${n(logistics.documentConnectivity)}%`,
+    `${n(documents - connected)} 份单证仍待互通，重点补齐订单、运单、签收单的关联。`,
     ["单证状态", "数量（份）", "占比"],
     [
       ["已互通", n(connected), n(logistics.documentConnectivity) + "%"],
       [
         "待互通",
-        n(tickets - connected),
+        n(documents - connected),
         n(100 - logistics.documentConnectivity) + "%",
       ],
-      ["应互通合计", n(tickets), "100%"],
+      ["应互通合计", n(documents), "100%"],
     ],
-    { raw: { numerator: connected, denominator: tickets } },
+    { raw: { numerator: connected, denominator: documents } },
   );
   add(
     10,
@@ -376,11 +382,13 @@ export function buildMonitoring(record, model, goods) {
       raw: { categories: record.trade.categories, total: record.trade.total },
     },
   );
+  const listedSuppliers = sum(record.trade.suppliers, "amount");
+  const otherSuppliers = Math.max(0, record.trade.purchase - listedSuppliers);
   const suppliers = [
     ...record.trade.suppliers,
     {
       label: "其他供应商合计",
-      amount: record.trade.purchase - record.trade.topFive,
+      amount: otherSuppliers,
     },
   ];
   add(
@@ -392,8 +400,8 @@ export function buildMonitoring(record, model, goods) {
     "亿元",
     "按供方向链主供货形成的采购交易金额统计供应商规模。",
     "供应商贸易额＝该供应商供货交易额；供方金额合计＝本期采购总额",
-    `${n(record.trade.topFive)} ＋ ${n(record.trade.purchase - record.trade.topFive)} ＝ ${n(record.trade.purchase)} 亿元`,
-    "前五家逐一呈现，其他供应商合并列示并与采购总额核对。",
+    `${n(listedSuppliers)} ＋ ${n(otherSuppliers)} ＝ ${n(record.trade.purchase)} 亿元`,
+    "已录入的供应商逐一呈现，未分列采购额合并列示。",
     ["供应商", "供货额（亿元）", "占采购总额"],
     suppliers.map((row) => [
       row.label,
@@ -434,7 +442,7 @@ export function buildMonitoring(record, model, goods) {
       14,
       "cr5",
       "供应商集中度",
-      suppliers.map((row) => [
+      record.trade.suppliers.slice(0, 5).map((row) => [
         row.label,
         n(row.amount),
         n(pct(row.amount, record.trade.purchase)) + "%",
@@ -485,54 +493,54 @@ export function buildMonitoring(record, model, goods) {
       { link, raw: { numerator: m.numerator, denominator: m.denominator } },
     );
   }
-  const supplyGaps = goods.map((label, i) => {
+  const entries = manual.resilience?.categories;
+  const supplyGaps = entries ? entries.map(row => ({
+    label: row.label, demand: row.demand, delivered: row.delivered,
+    gap: Math.max(0, row.demand - row.delivered), traceId: row.traceId || null,
+  })) : goods.map((label, i) => {
     const demand = 100 + i * 20;
-    const delivered =
-      i < resilience.bottleneckCount
-        ? Math.floor(demand * (0.92 - i * 0.01))
-        : demand;
-    return {
-      label,
-      demand,
-      delivered,
-      gap: demand - delivered,
-      traceId: resilience.risks[i]?.traceId ?? null,
-    };
+    const delivered = i < resilience.bottleneckCount ? Math.floor(demand * (0.92 - i * 0.01)) : demand;
+    return { label, demand, delivered, gap: demand - delivered, traceId: resilience.risks[i]?.traceId ?? null };
   });
-  const supplierRisks = resilience.risks.map((risk, i) => ({
-    label: risk.supplier,
-    goods: risk.label,
-    scheduled: 100 + i * 20,
+  const supplierRisks = entries ? entries.filter(row => row.supplier).map(row => ({
+    label: row.supplier, goods: row.label, scheduled: row.scheduled,
+    late: row.late, stoppedDays: row.stoppedDays, traceId: row.traceId || null,
+  })) : resilience.risks.map((risk, i) => ({
+    label: risk.supplier, goods: risk.label, scheduled: 100 + i * 20,
     late: Math.round(((100 + i * 20) * (100 - risk.arrivalRate)) / 100),
-    stoppedDays: i === 0 ? 2 : 0,
-    traceId: risk.traceId,
+    stoppedDays: i === 0 ? 2 : 0, traceId: risk.traceId,
   }));
-  const regionalRisks = resilience.risks.map((risk, i) => ({
-    goods: risk.label,
-    city: logistics.origins[i % logistics.origins.length].city,
-    previous: risk.regionShare - (i + 1) * 4,
-    current: risk.regionShare,
-    increase: (i + 1) * 4,
-    alert: risk.regionShare >= 60 && (i + 1) * 4 >= 10,
+  const region = (goods, city, previous, current) => {
+    const increase = round(current - previous);
+    return { goods, city, previous, current, increase, alert: current >= 60 && increase >= 10 };
+  };
+  // Keep observed regional data tied to the period's default sources when only a route is corrected.
+  const regionalRisks = entries ? entries.filter(row => row.region).map(row =>
+    region(row.label, row.region, row.previousShare, row.currentShare)
+  ) : resilience.risks.map((risk, i) =>
+    region(risk.label, risk.originCity, risk.regionShare - (i + 1) * 4, risk.regionShare)
+  );
+  const purchaseDrop = row => row.previousPurchase > 0 ? round(pct(row.previousPurchase - row.currentPurchase, row.previousPurchase)) : 0;
+  if (entries) resilience.risks = entries.map(row => ({
+    label: row.label, purchaseDrop: purchaseDrop(row),
+    arrivalRate: row.scheduled > 0 ? round(pct(row.scheduled - row.late, row.scheduled)) : null,
+    regionShare: row.currentShare, alternatives: row.alternatives, alternativeCity: row.alternativeCity,
+    route: row.route.split("/").map(node => node.trim()).filter(Boolean), traceId: row.traceId || null,
   }));
-  const alerts = resilience.risks
-    .map((risk, i) => ({
+  const alerts = resilience.risks.flatMap((risk, i) => {
+    const observedRegion = regionalRisks.find(row => row.goods === risk.label);
+    if (risk.purchaseDrop < 20 && !observedRegion?.alert) return [];
+    const day = record.period + "-28";
+    return [{
       id: record.id + "-" + record.period + "-" + i,
-      goods: risk.label,
-      drop: risk.purchaseDrop,
-      region: regionalRisks[i],
+      goods: risk.label, drop: risk.purchaseDrop, region: observedRegion ?? null,
       traceId: risk.traceId,
-      level: risk.purchaseDrop >= 25 && regionalRisks[i].alert ? "高" : "中",
-      status: "待核验",
-      owner: "链主保供专班",
-      time:
-        record.period +
-        "-28 " +
-        String(9 + Math.floor((i * 7) / 60)).padStart(2, "0") +
-        ":" +
-        String((i * 7) % 60).padStart(2, "0"),
-    }))
-    .filter((row) => row.drop >= 20 || row.region.alert);
+      level: risk.purchaseDrop >= 25 && observedRegion?.alert ? "高" : "中",
+      status: entries?.[i].status ?? "待核验",
+      owner: entries?.[i].owner || "链主保供专班",
+      time: entries ? day : day + " " + String(9 + Math.floor((i * 7) / 60)).padStart(2, "0") + ":" + String((i * 7) % 60).padStart(2, "0"),
+    }];
+  });
   Object.assign(resilience, {
     supplyGaps,
     supplierRisks,
@@ -551,7 +559,7 @@ export function buildMonitoring(record, model, goods) {
     "批",
     "在本统计周期按需求与实际到货识别关键品类的供货缺口。",
     "品类供货缺口＝max(需求批次−到货批次,0)；缺口率＝供货缺口÷需求批次×100%",
-    `总需求 ${n(demand)} 批，实际到货 ${n(demand - shortages)} 批，缺口 ${n(shortages)} 批，占 ${n(pct(shortages, demand))}%`,
+    `总需求 ${n(demand)} 批，实际到货 ${n(sum(supplyGaps, "delivered"))} 批，缺口 ${n(shortages)} 批，占 ${n(pct(shortages, demand))}%`,
     `${resilience.bottleneckCount} 类出现缺口，核查订单调整、发运与库存覆盖。`,
     ["关键品类", "需求（批）", "到货（批）", "缺口（批）", "缺口率"],
     supplyGaps.map((row) => [
@@ -623,13 +631,8 @@ export function buildMonitoring(record, model, goods) {
     alerts.map((row) => [
       row.time,
       row.goods,
-      "采购下降" +
-        row.drop +
-        "%；来源份额" +
-        row.region.current +
-        "%（+" +
-        row.region.increase +
-        "个百分点）",
+      "采购变化 " + delta(-row.drop) + "%" + (row.region
+        ? "；来源份额 " + row.region.current + "%（" + delta(row.region.increase) + " 个百分点）" : ""),
       row.level,
       row.owner,
       row.status,
@@ -746,9 +749,21 @@ export function buildMonitoring(record, model, goods) {
       (problem.id === "safety" ? "分" : "%") +
       "，按相同口径复算。";
   });
+  for (const task of manual.gap?.tasks ?? []) {
+    const existing = gap.problems.find(row => row.id === task.id);
+    if (existing) Object.assign(existing, task);
+    else {
+      const metric = gap.metrics.find(row => row.id === task.id);
+      gap.problems.push({
+        ...task, metric, view: metric.view, gap: 0, impact: 0,
+        evidence: metric.name + " · 本期跟踪",
+        cause: "按任务要求跟踪执行情况。", riskCount: 0,
+      });
+    }
+  }
   gap.problems.sort(
     (a, b) =>
-      (b.priority === "高") - (a.priority === "高") || b.impact - a.impact,
+      ["低", "中", "高"].indexOf(b.priority) - ["低", "中", "高"].indexOf(a.priority) || b.impact - a.impact,
   );
   model.assessment.actions = gap.problems.slice(0, 3).map((row) => ({
     title: row.title,

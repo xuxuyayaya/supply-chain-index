@@ -1,5 +1,7 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { recordApi } from './record-api.mjs';
+import { currentRecords, syncRecords } from './record-store.mjs';
 import { listCases, getCase, getIndex, getTrace } from './catalog.mjs';
 
 const files = new Map([
@@ -24,6 +26,8 @@ const files = new Map([
   ['/resilience-model.js', ['resilience-model.js', 'text/javascript;charset=utf-8']],
   ['/resilience-view.js', ['resilience-view.js', 'text/javascript;charset=utf-8']],
   ['/indicator-workspace.js', ['indicator-workspace.js', 'text/javascript;charset=utf-8']],
+  ['/record-editor.js', ['record-editor.js', 'text/javascript;charset=utf-8']],
+  ['/record-schema.js', ['record-schema.js', 'text/javascript;charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript;charset=utf-8']]
 ]);
 
@@ -39,6 +43,18 @@ export const server = createServer(async (req, res) => {
     res.writeHead(status, { 'Content-Type': 'application/json;charset=utf-8' });
     res.end(JSON.stringify(body));
   };
+  if (pathname === '/api/records' && req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Max-Age': '600'
+    });
+    return res.end();
+  }
+  if (pathname === '/api/records' && ['GET', 'POST', 'PUT'].includes(req.method)) {
+    res.setHeader('Cache-Control', 'no-store');
+    return recordApi(req, new URLSearchParams(req.url?.split('?')[1]), send);
+  }
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return send(405, { error: '仅支持 GET' });
@@ -53,7 +69,8 @@ export const server = createServer(async (req, res) => {
       return send(200, configured ? { key, servicePath: '/_AMapService' } : { key: null });
     }
     if (pathname === '/api/index') {
-      const value = getIndex(query.get('case'), query.get('period'), query.get('part'));
+      await syncRecords();
+      const value = getIndex(query.get('case'), query.get('period'), query.get('part'), currentRecords());
       return value ? send(200, value) : send(404, { error: '案例、期次或部件不存在' });
     }
     if (pathname.startsWith('/_AMapService/')) {
@@ -75,9 +92,10 @@ export const server = createServer(async (req, res) => {
     if (pathname === '/api/cases') return send(200, listCases());
     const route = /^\/api\/cases\/([a-z0-9-]+)(?:\/trace)?$/.exec(pathname);
     if (route) {
+      await syncRecords();
       const value = pathname.endsWith('/trace')
-        ? getTrace(route[1], query.get('part'))
-        : getCase(route[1], query.get('period'));
+        ? getTrace(route[1], query.get('part'), query.get('period'), currentRecords())
+        : getCase(route[1], query.get('period'), currentRecords());
       return value ? send(200, value) : send(404, { error: '案例、期次或部件不存在' });
     }
     const file = files.get(pathname);
