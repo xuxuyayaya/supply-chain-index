@@ -1035,56 +1035,125 @@ function renderTrade(trade, dimension) {
 function renderSystem(data) {
   const root = byId("system-content");
   const assessment = data.analysis?.assessment ?? data.assessment;
-  if (!assessment) {
-    root.replaceChildren(el("p", "当前数据尚不足以形成完整研判。", "muted"));
+  const development = data.analysis?.development;
+  const gap = data.analysis?.gap;
+  if (!assessment || !development || !gap) {
+    root.replaceChildren(el("p", assessment?.summary ?? "当前数据尚不足以形成完整研判。", "muted"));
     return;
   }
+
+  const improvements = gap.problems.filter(problem => problem.gap > 0)
+    .sort((a, b) => b.impact - a.impact);
+  const priority = improvements[0];
+  const priorityView = development.components.find(component => component.id === priority?.view);
+  const quality = assessment.headline.split("，", 1)[0];
   const conclusion = el("article", undefined, "assessment-conclusion");
+  const trend = development.previous ? development.score - development.previous.score : null;
+  const trendText = trend === null ? "首个评价月份" : Math.abs(trend) < 0.05
+    ? "与上月持平"
+    : "较上月" + (trend > 0 ? "提升 " : "下降 ") + number(Math.abs(trend)) + " 分";
+  const reading = el("p", undefined, "assessment-month");
+  reading.append(el("span", data.city + " · " + data.industry + " · " + data.period),
+    el("span", "发展指数 " + number(development.score) + " 分 · " + trendText));
   conclusion.append(
     el("p", "本期结论", "section-kicker"),
-    el("h3", assessment.headline),
-    el("p", assessment.summary),
+    el("h3", priorityView
+      ? quality + "，" + priorityView.name + "是主要提升方向"
+      : quality + "，主要指标已达到目标"),
+    reading,
   );
+
+  const facts = {
+    logistics: [
+      ["ontime", "准时交付 " + number(data.evaluation.ontime) + "%"],
+      ["cost", "物流费用占比 " + number(data.evaluation.cost) + "%"],
+    ],
+    supply: [
+      ["coverage", "已覆盖 " + data.metrics[0].numerator + "/" + data.metrics[0].denominator + " 个关键环节"],
+      ["local", "本地采购占比 " + number(data.metrics[1].value) + "%"],
+    ],
+    resilience: [
+      ["", data.evaluation.keyGoods + " 个关键品类中 " + data.evaluation.bottlenecks + " 个存在瓶颈"],
+    ],
+  };
+  const sections = el("section", undefined, "assessment-dimensions");
   const evidence = el("div", undefined, "assessment-evidence");
-  for (const finding of assessment.findings) {
-    const article = el("article");
-    const title = el("button", finding.title, "evidence-title");
-    title.type = "button";
-    title.onclick = () =>
-      finding.route
-        ? showScreen(finding.route, state.dimension, true)
-        : showScreen("dimensions", finding.dimension, true);
-    article.append(title, el("p", finding.text));
-    evidence.append(article);
+  sections.append(el("h3", "分项判断"), evidence);
+  for (const component of development.components) {
+    const candidates = improvements.filter(problem => problem.view === component.id);
+    const highRisk = candidates.find(problem => problem.priority === "高");
+    const lead = component.id === priorityView?.id;
+    const problem = lead ? priority : highRisk ?? candidates[0];
+    const tone = lead ? "priority" : highRisk ? "risk" : problem ? "attention" : "steady";
+    const card = el("article", undefined, "assessment-dimension " + tone);
+    const heading = el("div", undefined, "assessment-card-heading");
+    const label = { priority: "优先提升", risk: "优先核验", attention: "待提升", steady: "已达目标" }[tone];
+    const status = el("span", undefined, "assessment-status " + tone);
+    if (problem) {
+      const arrow = el("span", "↑");
+      arrow.setAttribute("aria-hidden", "true");
+      status.append(arrow);
+    }
+    status.append(label);
+    heading.append(el("h4", component.name), status);
+
+    const score = el("button", undefined, "assessment-card-score");
+    score.type = "button";
+    score.setAttribute("aria-haspopup", "dialog");
+    score.setAttribute("aria-label", component.name + " " + number(component.score) + " 分，查看计算");
+    score.onclick = () => openDevelopmentMethod(component.id);
+    score.append(el("strong", number(component.score)), el("span", "分"));
+    const detail = facts[component.id].filter(([id]) => id !== problem?.id)
+      .map(([, text]) => text).join(" · ");
+    card.append(heading, score, el("p", detail, "assessment-fact"));
+    if (problem) {
+      const metric = problem.metric;
+      const unit = metric.id === "safety" ? " 分" : "%";
+      const target = el("div", undefined, "assessment-target");
+      target.append(
+        el("strong", metric.name),
+        el("span", "当前 " + number(metric.value) + unit),
+        el("span", "目标 " + (metric.direction === "negative" ? "≤ " : "≥ ") + metric.goal + unit, "assessment-target-goal"),
+      );
+      card.append(target);
+    }
+    const viewLink = el("button", "查看分项 →", "text-link assessment-view-link");
+    viewLink.type = "button";
+    viewLink.setAttribute("aria-label", "查看" + component.name);
+    viewLink.onclick = () => showScreen(component.id, state.dimension, true);
+    card.append(viewLink);
+    evidence.append(card);
   }
-  const context = el("article", undefined, "assessment-context");
-  context.append(
-    el("h3", assessment.development.title),
-    el("p", assessment.development.text),
-  );
+
   const actions = el("section", undefined, "assessment-actions");
-  actions.append(el("h3", "本期建议"));
-  const list = el("div", undefined, "assessment-action-list");
-  for (const action of assessment.actions) {
-    const article = el("article");
-    const heading = el("button", action.title, "text-link");
-    heading.type = "button";
-    heading.onclick = () =>
-      action.route
-        ? showScreen(
-            action.route,
-            action.dimension || state.dimension,
-            true,
-            Boolean(action.dimension),
-          )
-        : showScreen("dimensions", action.dimension, true);
-    article.append(heading, el("p", action.text));
-    list.append(article);
-  }
-  if (!assessment.actions.length)
-    list.append(el("p", "持续跟踪关键供应商交付与采购份额，巩固现有配套。"));
-  actions.append(list);
-  root.replaceChildren(conclusion, evidence, context, actions);
+  const actionHeader = el("header", undefined, "assessment-actions-heading");
+  actionHeader.append(el("h3", "下一步行动"));
+  const ranked = gap.problems.slice(0, 3);
+  actions.append(actionHeader);
+  if (ranked.length) {
+    actionHeader.append(el("span", "高优先级任务在前"));
+    const list = el("ol", undefined, "assessment-action-list");
+    for (const action of ranked) {
+      const item = el("li");
+      const copy = el("div", undefined, "assessment-action-copy");
+      const title = el("h4", action.title);
+      if (action.priority === "高") {
+        title.append(el("span", "优先核验", "assessment-status risk"));
+      }
+      copy.append(title, el("p", action.action));
+      const meta = el("div", undefined, "assessment-action-meta");
+      meta.append(el("span", action.owner + " · " + action.deadline));
+      const details = el("button", "查看任务 →", "text-link assessment-view-link");
+      details.type = "button";
+      details.setAttribute("aria-label", "查看任务：" + action.title);
+      details.onclick = () => showScreen("gap-actions", action.id, true, true);
+      meta.append(details);
+      item.append(copy, meta);
+      list.append(item);
+    }
+    actions.append(list);
+  } else actions.append(el("p", "保持现有水平，继续跟踪交付和关键品类的供应变化。", "assessment-fact"));
+  root.replaceChildren(conclusion, sections, actions);
 }
 
 function connected(trace, selected) {
