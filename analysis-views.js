@@ -1,11 +1,11 @@
-import { renderScoreTrend } from "./score-trend.js";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
 import {
   developmentDomain,
   scoreDomain,
   scorePoints,
 } from "./score-trend-model.js";
-import { renderResilience } from "./resilience-view.js?v=20261124-pages";
-import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-records";
+import { renderResilience } from "./resilience-view.js?v=20261124-chart-labels";
+import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-chart-labels";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { simulateDevelopment } from "./analysis-model.js";
 
@@ -21,9 +21,10 @@ function panel(title, className = "") {
   if (title) node.append(el("h3", title));
   return node;
 }
-function table(headings, rows) {
+function table(title, headings, rows) {
   const wrapper = el("div", undefined, "analysis-table-scroll");
   const grid = el("table", undefined, "analysis-table");
+  grid.append(el("caption", title, "statistics-table-caption"));
   const head = el("thead");
   const tr = el("tr");
   for (const text of headings) {
@@ -220,6 +221,7 @@ function renderLogistics(data, actions) {
       );
     content.replaceChildren(
       table(
+        direction + "线路与运量 · " + data.period,
         ["品类", "途经节点", "运输方式", "运量（万吨）"],
         model.routes
           .filter((row) => row.direction === direction)
@@ -237,18 +239,24 @@ function renderLogistics(data, actions) {
   routes.append(filter, content);
   showRoutes(actions.resume.direction ?? "原料进货");
   const grid = el("div", undefined, "analysis-two-column");
-  const modes = panel("运输方式结构");
+  const modes = panel("运输方式运量占比");
   const stack = el("div", undefined, "transport-stack");
+  stack.setAttribute("aria-hidden", "true");
   const legend = el("div", undefined, "transport-legend");
+  const palette = ["#961d37", "#5c788b", "#8e6537", "#63766b", "#79648a", "#885e6b", "#5c716b"];
   model.modes.forEach((item, i) => {
     const block = el("span");
     block.style.flex = item.share;
-    block.dataset.mode = String(i);
+    const color = palette[i % palette.length];
+    block.style.backgroundColor = color;
     block.title = item.label + " " + number(item.share) + "%";
     stack.append(block);
-    legend.append(stat(item.label, number(item.share) + "%"));
+    const entry = stat(item.label, number(item.share) + "%");
+    entry.style.setProperty("--transport-color", color);
+    legend.append(entry);
   });
   modes.append(
+    el("p", "各段长度表示该运输方式占本期总运量的比例。", "chart-note"),
     stack,
     legend,
     el(
@@ -419,6 +427,7 @@ function renderComparison(data, actions) {
         dimensions.append(row);
       }
       card.append(
+        el("p", "分项得分（分）", "city-dimension-caption"),
         dimensions,
         stat("产业链增加值", number(city.addedValue) + " 亿元"),
       );
@@ -538,6 +547,7 @@ function renderGapActions(data, actions) {
   };
   problemPanel.append(
     table(
+      "本期改进事项明细 · " + data.period,
       ["优先级", "改进事项", "现状与目标", "建议牵头", "计划期限"],
       model.problems.map((problem) => [
         problem.priority,
@@ -640,7 +650,8 @@ function renderGapReview(data, actions) {
         "analysis-reading",
       ),
       table(
-        ["评价方面", model.previous.period, data.period, "变化"],
+        "各项指数较上期的变化",
+        ["评价方面", model.previous.period + "（分）", data.period + "（分）", "较上期（分）"],
         [
           [
             "发展总指数",

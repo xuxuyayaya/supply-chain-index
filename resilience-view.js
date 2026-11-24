@@ -1,4 +1,4 @@
-import { renderScoreTrend } from "./score-trend.js";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
 import { developmentDomain } from "./score-trend-model.js";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
@@ -106,12 +106,12 @@ const columnLabels = {
     "需求（批）",
     "到货（批）",
     "缺口（批）",
-    "缺口率",
+    "缺口率（%）",
   ],
   "supplier-risk": ["供应商", "应到货（批）", "延误（批）", "停供时长", "判读"],
-  "region-risk": ["主要来源", "上期份额", "本期份额", "份额变化", "判读"],
+  "region-risk": ["主要来源", "上期份额（%）", "本期份额（%）", "变化（百分点）", "判读"],
   "chain-alert": ["预警等级", "触发证据", "触发时间", "核验状态"],
-  bottleneck: ["供给状态", "供货缺口", "关联预警", "跟踪重点"],
+  bottleneck: ["供给状态", "供货缺口（批）", "关联预警", "跟踪重点"],
 };
 function categoryDetail(category, actions, lens) {
   const detail = el("div", undefined, "resilience-category-detail");
@@ -372,7 +372,8 @@ export function renderResilience(data, actions) {
     undefined,
     "analysis-table resilience-category-table",
   );
-  grid.setAttribute("aria-label", "关键品类韧性风险清单");
+  const tableTitle = el("caption", undefined, "statistics-table-caption");
+  grid.append(tableTitle);
   grid.setAttribute("aria-describedby", caption.id);
   const head = el("thead"),
     body = el("tbody");
@@ -505,6 +506,7 @@ export function renderResilience(data, actions) {
   const renderMetric = () => {
     const metric = metrics.find((row) => row.id === state.lens);
     console.dataset.indicator = metric.id;
+    tableTitle.textContent = metric.name + "明细 · " + data.period;
     addCategory.textContent = indicatorInputs[metric.id].label;
     addCategory.setAttribute("aria-label", addCategory.textContent);
     tabs

@@ -170,10 +170,13 @@ export function createRecordEditor(dialog, api, refresh) {
         return;
       }
       const rows = data[panel.key];
+      const isRoutePanel = group === "routes" && panel.id === "routes";
       const scroller = el("div", undefined, "record-table-wrap");
       scroller.tabIndex = 0;
       scroller.setAttribute("aria-label", panel.label);
       const table = el("table");
+      const tableTitle = isRoutePanel && direction ? panel.label + " · " + direction : panel.label;
+      table.append(el("caption", tableTitle, "statistics-table-caption"));
       const head = el("tr");
       for (const field of panel.fields) {
         const cell = el("th", field.label);
@@ -183,7 +186,6 @@ export function createRecordEditor(dialog, api, refresh) {
       if (panel.editableRows) head.append(el("th", "操作"));
       table.createTHead().append(head);
       const tbody = table.createTBody();
-      const isRoutePanel = group === "routes" && panel.id === "routes";
       const visible = rows.map((row, i) => ({ row, i })).filter(({ row }) => !isRoutePanel || !direction || row.direction === direction);
       let target;
       for (const { row, i } of visible) {

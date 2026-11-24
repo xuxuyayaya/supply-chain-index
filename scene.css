@@ -2714,18 +2714,6 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   overflow: hidden;
   margin: 26px 0;
 }
-.transport-stack span[data-mode="0"] {
-  background: #a73c52;
-}
-.transport-stack span[data-mode="1"] {
-  background: #c08491;
-}
-.transport-stack span[data-mode="2"] {
-  background: #8b9ba7;
-}
-.transport-stack span[data-mode="3"] {
-  background: #cbd4dc;
-}
 .transport-legend {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -3427,11 +3415,58 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   margin: 20px 0 0;
   padding: 16px 0 2px;
   border-top: 1px solid var(--line);
+  --chart-current: #ae4a62;
+  --chart-previous: #95a7b4;
 }
 .indicator-chart figcaption {
-  color: var(--muted);
+  margin: 0 0 14px;
+}
+.chart-caption-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 14px;
+}
+.chart-caption-heading strong {
+  color: var(--ink);
+  font-size: clamp(16px, 1.7vw, 19px);
+}
+.chart-caption-heading > span {
+  color: #43525e;
   font-size: 13px;
-  margin-bottom: 10px;
+  font-weight: 650;
+}
+.indicator-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 18px;
+  margin-top: 7px;
+  color: #52616d;
+  font-size: 13px;
+}
+.indicator-chart-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.indicator-chart-key > i {
+  width: 13px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--chart-current);
+}
+.indicator-chart-key.previous > i {
+  background: var(--chart-previous);
+}
+.chart-reader-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .indicator-chart-row {
   display: grid;
@@ -3464,11 +3499,11 @@ button.trade-category-row:hover meter::-moz-meter-bar {
 .indicator-chart-line i {
   display: block;
   height: 100%;
-  background: #ae4a62;
+  background: var(--chart-current);
   border-radius: 4px;
 }
 .indicator-chart-line.previous i {
-  background: #95a7b4;
+  background: var(--chart-previous);
 }
 .indicator-chart-line strong {
   font-size: 14px;
@@ -4754,4 +4789,47 @@ button.trade-category-row:hover meter::-moz-meter-bar {
   .multipage-scene .scene-nav {
     margin-bottom: 18px;
   }
+}
+
+
+.statistics-table-caption {
+  padding: 8px 0;
+  color: #43525e;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: left;
+}
+.record-table-wrap .statistics-table-caption {
+  padding-inline: 10px;
+}
+.chart-note {
+  margin: 0 0 9px;
+  color: #52616d;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.indicator-chart > .chart-note {
+  margin-top: 8px;
+}
+.radar-title {
+  text-align: center;
+}
+.transport-legend .analysis-stat > span::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 2px;
+  background: var(--transport-color);
+}
+.city-dimension-caption,
+.trace-graphic-title {
+  margin: 14px 0 7px;
+  color: #43525e;
+  font-size: 14px;
+  font-weight: 650;
+}
+.trace-view > .trace-graphic-title:first-of-type {
+  margin-top: 0;
 }

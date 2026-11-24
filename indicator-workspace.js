@@ -1,4 +1,4 @@
-import { renderScoreTrend } from "./score-trend.js";
+import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
 
@@ -14,45 +14,82 @@ function button(text, click, className) {
   node.onclick = click;
   return node;
 }
-function chart(metric) {
-  if (!metric.bars?.length) return null;
+// A chart can show a different measure from the indicator it supports.
+const chartLabels = {
+  "route-flow": ["各线路月运量", "运量", "万吨"],
+  "category-direction": ["各品类月运量", "运量", "万吨"],
+  "category-volume": ["分品类运量同比对比", "运量", "万吨"],
+  "transport-mix": ["各运输方式月运量", "运量", "万吨"],
+  "category-trade": ["各品类采购与销售合计", "购销额", "亿元"],
+  "supplier-trade": ["各供应商供货金额", "供货额", "亿元"],
+  "gdp-gap": ["本市与对标城市产业链增加值", "增加值", "亿元"],
+};
+const monthText = (year, month) => year + " 年 " + month + " 月";
+
+function chart(metric, period) {
+  const labels = chartLabels[metric.id];
+  if (!labels || !metric.bars?.length) return null;
+  const [title, measure, unit] = labels;
+  const [year, month] = period.split("-").map(Number);
+  const compared = metric.bars.some(row => Object.hasOwn(row, "other"));
+  const series = [
+    { key: "value", tone: "current", label: compared ? "本月" : "本期", date: monthText(year, month) },
+    ...(compared ? [{ key: "other", tone: "previous", label: "上年同月", date: monthText(year - 1, month) }] : []),
+  ];
   const figure = el("figure", undefined, "indicator-chart");
-  figure.append(
-    el("figcaption", (metric.barLabels ?? ["本期数值"]).join(" / ")),
-  );
-  const max = Math.max(
-    ...metric.bars.flatMap((row) => [row.value, row.other ?? 0]),
-    1,
-  );
+  const caption = el("figcaption");
+  const heading = el("div", undefined, "chart-caption-heading");
+  heading.append(el("strong", title), el("span", "右侧数值：" + measure + "（" + unit + "）"));
+  const legend = el("div", undefined, "indicator-chart-legend");
+  for (const entry of series) {
+    const key = el("span", undefined, "indicator-chart-key " + entry.tone);
+    key.append(el("i"), el("span", entry.label + " · " + entry.date));
+    legend.append(key);
+  }
+  caption.append(heading, legend);
+  figure.append(caption);
+  const max = Math.max(1, ...metric.bars.flatMap(row => series.map(entry => row[entry.key] ?? 0)));
+  let missing = false;
   for (const row of metric.bars) {
     const item = el("div", undefined, "indicator-chart-row");
     item.append(el("span", row.label));
     const values = el("div", undefined, "indicator-chart-values");
-    for (const [value, tone] of [
-      [row.value, "current"],
-      ...(row.other === undefined ? [] : [[row.other, "previous"]]),
-    ]) {
-      const line = el("div", undefined, "indicator-chart-line " + tone);
+    for (const entry of series) {
+      const raw = row[entry.key];
+      const known = Number.isFinite(raw);
+      const line = el("div", undefined, "indicator-chart-line " + entry.tone);
       const track = el("span");
-      const fill = el("i");
-      fill.style.width = (value / max) * 100 + "%";
-      track.append(fill);
-      line.append(track, el("strong", number(value)));
+      track.setAttribute("aria-hidden", "true");
+      if (known) {
+        const fill = el("i");
+        fill.style.width = (raw / max) * 100 + "%";
+        track.append(fill);
+      } else missing = true;
+      const reading = el("strong");
+      reading.append(
+        el("span", entry.label + measure + " ", "chart-reader-label"),
+        document.createTextNode(known ? number(raw) : "—"),
+      );
+      if (known) reading.append(el("span", " " + unit, "chart-reader-label"));
+      reading.title = entry.date + " " + measure + (known ? " " + number(raw) + " " + unit : "暂无记录");
+      line.append(track, reading);
       values.append(line);
     }
     item.append(values);
     figure.append(item);
   }
+  if (missing) figure.append(el("p", "“—” 表示未收录该期数据。", "chart-note"));
   return figure;
 }
-function detailTable(metric) {
+function detailTable(metric, period) {
   const wrapper = el("div", undefined, "analysis-table-scroll indicator-data");
   const table = el("table", undefined, "analysis-table");
-  table.setAttribute("aria-label", metric.name + "分析明细");
+  table.append(el("caption", metric.name + "明细 · " + period, "statistics-table-caption"));
   const head = el("thead");
   const header = el("tr");
-  for (const text of metric.columns) {
-    const cell = el("th", text);
+  for (const [index, text] of metric.columns.entries()) {
+    const label = metric.id === "index-gap" && index > 0 ? text + "（分）" : text;
+    const cell = el("th", label);
     cell.scope = "col";
     header.append(cell);
   }
@@ -180,12 +217,12 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
           endPeriod: data.period,
         }),
       );
-    const plot = chart(metric);
+    const plot = chart(metric, data.period);
     if (plot) {
       const evidence = el("details", undefined, "indicator-evidence");
-      evidence.append(el("summary", "查看明细数据"), detailTable(metric));
+      evidence.append(el("summary", "查看明细数据"), detailTable(metric, data.period));
       detail.append(plot, evidence);
-    } else detail.append(detailTable(metric));
+    } else detail.append(detailTable(metric, data.period));
     const links = {
       trace: ["进入供应链追溯", () => actions.openTrace()],
       trade: ["查看采购结构", () => actions.navigate("trade")],
