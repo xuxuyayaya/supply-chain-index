@@ -8,7 +8,7 @@ import {
 import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
 import { renderAnalysis } from "./analysis-views.js?v=20261124-pages";
-import { sceneUrl, supplyMetrics } from "./scene-routes.js?v=20261124-pages";
+import { gapRoutes, sceneUrl, supplyMetrics } from "./scene-routes.js?v=20261124-pages";
 
 const byId = (id) => document.getElementById(id);
 const siteRoot = new URL("./", import.meta.url);
@@ -17,7 +17,11 @@ const { clearTraceMap, renderTraceMap, fitTraceMap } = page === "trace"
   ? await import("./trace-map.js?v=20261124-pages")
   : {};
 const context = () => ({ city: view.city.value, case: view.case.value, period: view.period.value });
-const urlFor = (route, detail, selected = context()) => sceneUrl(siteRoot, route, selected, detail);
+function urlFor(route, detail, selected = context()) {
+  const peer = selected.case === view.case.value && gapRoutes.includes(page) && gapRoutes.includes(route)
+    ? new URLSearchParams(location.search).get("peer") : null;
+  return sceneUrl(siteRoot, route, selected, { peer, ...detail });
+}
 const view = Object.fromEntries(
   [
     "city",
@@ -48,8 +52,6 @@ const state = {
   detail: null,
   trace: null,
   selected: null,
-  dimension: "coverage",
-  screen: page,
 };
 const dimensions = {
   coverage: {
@@ -558,6 +560,7 @@ function setQuery(key, value) {
   if (value) url.searchParams.set(key, value);
   else url.searchParams.delete(key);
   history.replaceState(null, "", url);
+  if (key === "peer") updateNavigation(context());
 }
 
 function syncContext({ clearDetail = false } = {}) {
@@ -631,7 +634,6 @@ function openDevelopmentMethod(viewId) {
 }
 
 function showDimension(key) {
-  state.dimension = key;
   if (!state.detail) return;
   const dimension = dimensions[key];
   const tabs = state.detail.metrics.map((item) => {
@@ -1188,7 +1190,7 @@ function renderGraph(focusId) {
   }
   buttons.get(focusId)?.focus({ preventScroll: true });
   renderNode(trace, selected);
-  if (state.screen === "trace" && !byId("workspace-content").hidden) {
+  if (page === "trace" && !byId("workspace-content").hidden) {
     renderTraceMap({
       api,
       container: view["trace-map"],
@@ -1312,7 +1314,7 @@ async function loadTrace(resume) {
     );
     if (req.signal.aborted) return;
     state.trace = result.data;
-    state.selected = resume?.node ?? null;
+    state.selected = state.trace.nodes.some(node => node.id === resume?.node) ? resume.node : null;
     renderGraph();
   } catch {
     if (req.signal.aborted) return;
@@ -1385,7 +1387,7 @@ async function loadCase(resume = {}) {
       if (chosen && result.data.trace?.partId !== chosen) await loadTrace(resume.trace);
       else {
         state.trace = result.data.trace ?? null;
-        state.selected = resume.trace?.node ?? null;
+        state.selected = state.trace?.nodes.some(node => node.id === resume.trace?.node) ? resume.trace.node : null;
         renderGraph();
       }
     } else renderAnalysis(page, result.data, actions);
