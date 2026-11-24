@@ -1,7 +1,7 @@
 import { getIndex, getTrace } from "./catalog.mjs";
 import { recordGroups } from "../frontend/record-schema.js";
 import { inputGroup, previewValues } from "./record-inputs.mjs";
-import { currentRecords, publishRecord, RecordStoreError, syncRecords, withRecord } from "./record-store.mjs";
+import { currentRecords, publishRecord, RecordStoreError, recordWritesEnabled, syncRecords, withRecord } from "./record-store.mjs";
 import { validateRecordGroup } from "./record-validation.mjs";
 
 async function readBody(req) {
@@ -28,8 +28,7 @@ export async function recordApi(req, query, send) {
     return send(400, { error: "请选择有效的城市产业链、月份和录入类型。" });
   }
   const write = req.method === "PUT";
-  const token = /^Bearer ([A-Za-z0-9_]+)$/.exec(req.headers.authorization ?? "")?.[1];
-  if (write && !token) return send(401, { error: "保存前需输入有此仓库写权限的 GitHub 令牌。" });
+  if (write && !recordWritesEnabled()) return send(503, { error: "在线保存暂不可用。请保留已录入的数据并稍后重试。" });
   try {
     const ready = await syncRecords();
     const records = currentRecords();
@@ -43,6 +42,7 @@ export async function recordApi(req, query, send) {
       return send(200, {
         data: saved?.groups[key] ?? inputGroup(base, group, base.trace),
         sha: saved?.sha ?? null, updatedAt: saved?.updatedAt ?? null, ready,
+        writable: ready && recordWritesEnabled(),
         parts: base.traceParts, published: Boolean(saved?.groups[key]),
         suggestions: group === "gap" ? base.analysis.gap.problems.map(({ id, title, action, owner, deadline, acceptance, priority }) => ({
           id, title, action, owner, deadline, acceptance, priority
@@ -59,8 +59,8 @@ export async function recordApi(req, query, send) {
     const groups = { ...saved?.groups, [key]: normalized };
     const preview = getIndex(id, month, group === "trace" ? part : null, withRecord(id, month, { groups }));
     if (!write) return send(200, { before: previewValues(base, group), after: previewValues(preview, group) });
-    if (!ready && !saved) return send(503, { error: "暂未连通 GitHub 记录，请稍后重试。" });
-    return send(200, await publishRecord({ id, month, sha: saved?.sha, groups, token }));
+    if (!ready) return send(503, { error: "暂未连通 GitHub 记录，请稍后重试。" });
+    return send(200, await publishRecord({ id, month, sha: saved?.sha, groups }));
   } catch (error) {
     if (error instanceof RecordStoreError) return send(error.status, { error: error.message });
     return send(502, { error: "录入服务暂未响应，请稍后重试。未确认保存时可重新打开记录查看版本。" });

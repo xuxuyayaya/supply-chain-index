@@ -58,7 +58,7 @@ export const server = createServer(async (req, res) => {
   if (pathname === '/api/records' && req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Max-Age': '600'
     });
     return res.end();

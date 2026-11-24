@@ -49,6 +49,8 @@ Render 使用 Node.js 运行时，构建命令 `npm test`，启动命令 `npm st
 
 ## 月度数据维护
 
-在物流、供应、追溯、韧性或差距页打开录入窗口，修改所选城市产业链的当月数据。试算后可用 GitHub 细粒度个人访问令牌保存。令牌应仅授权该仓库的 Contents 读写权限，只用于当次提交。保存文件位于 [data 分支](https://github.com/xuxuyayaya/supply-chain-index/tree/data) 的 `records/<case>/<YYYY-MM>.json`。提交记录可追溯，保存后在线指数及相关月份走势重新计算。仓库公开，录入内容须可公开。
+在物流、供应、追溯、韧性或差距页打开录入窗口，修改所选城市产业链的当月数据，可直接保存并更新指标，也可先试算。访客无需登录。保存文件位于 [data 分支](https://github.com/xuxuyayaya/supply-chain-index/tree/data) 的 `records/<case>/<YYYY-MM>.json`。提交记录可追溯，保存后在线指数及相关月份走势重新计算。仓库公开，录入内容须可公开。
+
+开通在线保存时，为本仓库配置可写的 GitHub 部署公钥，并将对应私钥仅保存在 Render 服务的 `GITHUB_RECORDS_DEPLOY_KEY` 环境变量。服务把录入限定为已有城市产业链、有效统计月及指定录入类型，并核对文件版本后提交至 `data` 分支。
 
 省内同产业对标按 2025 年城市 GDP 差额排序，数据与来源见 `server/benchmark-cities.mjs`。产业差距以同月产业增加值和评分计算。

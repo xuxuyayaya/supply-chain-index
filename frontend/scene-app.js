@@ -1,4 +1,4 @@
-import { createRecordEditor } from "./record-editor.js?v=20261124-change-colors";
+import { createRecordEditor } from "./record-editor.js?v=20261124-direct-save";
 import { renderScoreTrend } from "./score-trend.js?v=20261124-change-colors";
 import {
   developmentDomain,
