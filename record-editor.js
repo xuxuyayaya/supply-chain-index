@@ -94,7 +94,7 @@ export function createRecordEditor(dialog, api, refresh) {
 
   const request = async (url, init = {}) => {
     const res = await fetch(api + "/api/records?" + url, {
-      ...init, signal: AbortSignal.timeout(25000), cache: "no-store",
+      ...init, signal: AbortSignal.timeout(init.method === "PUT" ? 40000 : 25000), cache: "no-store",
     });
     const value = await res.json();
     if (!res.ok) throw new Error(value.error ?? "录入请求失败。");
@@ -127,31 +127,16 @@ export function createRecordEditor(dialog, api, refresh) {
     const results = el("section", undefined, "record-preview");
     const version = el("p", session.published ? "正在编辑已保存的月度记录。" : "表单已带入当前测算值，可直接补充或修正。", "record-meta");
 
-    const credential = el("label", "GitHub 写入令牌", "record-token");
-    const password = el("input");
-    password.type = "password";
-    password.autocomplete = "off";
-    password.spellcheck = false;
-    password.placeholder = "粘贴具有仓库 Contents 读写权限的令牌";
-    credential.append(password);
-    const tokenLink = el("a", "创建令牌", "view-text-link");
-    tokenLink.href = "https://github.com/settings/personal-access-tokens/new?name=Supply+chain+records&target_name=xuxuyayaya&contents=write";
-    tokenLink.target = "_blank";
-    tokenLink.rel = "noopener";
-    const access = el("div", undefined, "record-access");
-    access.append(credential, tokenLink, el("p", "保存会提交到公开仓库。只录入可公开的数据。令牌仅用于本次提交。", "record-meta"));
-    access.hidden = true;
-
-    const preview = makeButton("试算并查看变化", () => submit("POST"), "primary-button");
-    const save = makeButton("保存到 GitHub", () => submit("PUT"), "primary-button");
-    save.hidden = true;
+    const note = el("p", session.writable ? "保存后数据将公开，并更新相关指标。" : "在线保存暂不可用，可以先试算。", "record-meta");
+    const preview = makeButton("试算并查看变化", () => submit("POST"));
+    const save = makeButton("保存并更新指标", () => submit("PUT"), "primary-button");
+    save.disabled = !session.writable;
     footer.replaceChildren(makeButton("关闭", close), preview, save);
 
     function changed() {
       session.dirty = true;
       results.replaceChildren();
       message.textContent = "";
-      save.hidden = access.hidden = true;
     }
 
     function showPanel(index = 0, focus = null) {
@@ -251,17 +236,10 @@ export function createRecordEditor(dialog, api, refresh) {
       if (proposal) data.tasks.push({ ...proposal });
     }
     panels.forEach((panel, i) => tabs.append(makeButton(panel.label, () => showPanel(i), "record-tab")));
-    body.replaceChildren(el("p", schema.note), version, tabs, content, results, access);
+    body.replaceChildren(el("p", schema.note), version, tabs, content, results, note);
     showPanel(initialPanel, "entry");
 
     async function submit(method) {
-      const token = password.value.trim();
-      if (method === "PUT" && !token) {
-        message.textContent = "请输入 GitHub 写入令牌。";
-        password.focus();
-        return;
-      }
-      if (method === "PUT") password.value = "";
       busy = true;
       // Disable every editing control while the submitted revision is in flight.
       const controls = [...dialog.querySelectorAll("input, select, button")].filter(node => !node.disabled);
@@ -269,16 +247,12 @@ export function createRecordEditor(dialog, api, refresh) {
       message.textContent = method === "POST" ? "正在试算…" : "正在提交到 GitHub…";
       try {
         const result = await request(session.url, {
-          method, headers: {
-            "Content-Type": "application/json",
-            ...(method === "PUT" ? { Authorization: "Bearer " + token } : {}),
-          },
+          method, headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sha: session.sha, data }),
         });
         if (method === "POST") {
           drawPreview(results, result);
-          save.hidden = access.hidden = !session.ready;
-          message.textContent = session.ready ? "试算完成。确认结果后可保存。" : "试算完成。GitHub 记录暂未连通，请稍后重开窗口保存。";
+          message.textContent = session.writable ? "试算完成，可以保存。" : "试算完成。在线保存暂不可用。";
           results.scrollIntoView({ block: "start" });
         } else {
           session.dirty = false;
