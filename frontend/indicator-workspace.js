@@ -76,6 +76,8 @@ function detailTable(metric) {
 
 export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
   const selected = root.dataset.indicator;
+  const detailId = view + "-indicator-detail";
+  const formulaId = view + "-indicator-formula";
   const metrics = (data.analysis.indicators ?? [])
     .filter((metric) => metric.view === view)
     .map((metric) => ({
@@ -88,23 +90,25 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
   }
   root.className = "indicator-workspace";
   const heading = el("div", undefined, "indicator-workspace-heading");
-  const scoringCount = metrics.filter((m) => m.scoring).length;
+  const scoring = metrics.filter(metric => metric.scoring);
+  const observed = metrics.filter(metric => !metric.scoring);
+  const groups = scoring.length
+    ? [{ label: "计分指标", metrics: scoring }, { label: "观测指标", metrics: observed }]
+    : [{ metrics }];
   heading.append(
-    el("h3", labels[view] + "指标全景"),
-    el(
-      "span",
-      metrics.length +
-        " 项指标 · " +
-        (scoringCount ? scoringCount + " 项参与总指数计分" : "对标与改进"),
-    ),
+    el("h3", labels[view] + "指标"),
+    el("span", "共 " + metrics.length + " 项"),
   );
   const layout = el("div", undefined, "indicator-workspace-layout");
   const nav = el("nav", undefined, "indicator-selector");
-  nav.setAttribute("aria-label", labels[view] + "完整指标");
+  nav.setAttribute("aria-label", labels[view] + "指标列表");
+  const mobilePicker = el("label", "切换指标", "indicator-mobile-picker");
   const mobile = el("select");
-  mobile.setAttribute("aria-label", labels[view] + "指标选择");
-  mobile.className = "indicator-mobile-select";
+  mobile.setAttribute("aria-controls", detailId);
+  mobilePicker.append(mobile);
   const detail = el("article", undefined, "indicator-detail");
+  detail.id = detailId;
+  detail.setAttribute("aria-labelledby", detailId + "-title");
   const show = (id) => {
     const metric = metrics.find((row) => row.id === id) ?? metrics[0];
     root.dataset.indicator = metric.id;
@@ -117,29 +121,32 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
           String(node.dataset.indicator === metric.id),
         ),
       );
-    const title = el("div", undefined, "indicator-detail-heading");
-    title.append(el("h4", metric.name));
-    if (metric.scoring)
-      title.append(el("span", "参与发展指数", "indicator-scoring"));
-    const value = button(
-      "",
-      () => {
-        formula.open = !formula.open;
-      },
-      "indicator-value",
-    );
-    value.setAttribute("aria-label", "查看" + metric.name + "计算口径");
-    const displayValue = ["项", "类", "条", "批", "家"].includes(metric.unit)
-      ? String(Math.round(metric.value))
-      : number(metric.value);
-    value.append(el("strong", displayValue), el("small", metric.unit));
-    if (metric.secondary) value.append(el("span", metric.secondary));
+    const top = el("header", undefined, "indicator-detail-heading");
+    const title = el("div");
+    const name = el("h4", metric.name);
+    name.id = detailId + "-title";
+    title.append(name, el("p", metric.definition, "indicator-definition"));
+
     const formula = el("details", undefined, "indicator-formula");
+    formula.id = formulaId;
     formula.append(
-      el("summary", "查看计算口径"),
+      el("summary", "计算口径"),
       el("p", metric.formula),
       el("p", metric.calculation, "indicator-substitution"),
     );
+    const value = button("", () => { formula.open = !formula.open; }, "indicator-value");
+    value.setAttribute("aria-controls", formulaId);
+    value.setAttribute("aria-expanded", "false");
+    formula.addEventListener("toggle", () => value.setAttribute("aria-expanded", String(formula.open)));
+    const displayValue = ["项", "类", "条", "批", "家"].includes(metric.unit)
+      ? String(Math.round(metric.value))
+      : number(metric.value);
+    value.setAttribute("aria-label", metric.name + " " + displayValue + " " + metric.unit + "，查看计算口径");
+    const readingValue = el("span", undefined, "indicator-number");
+    readingValue.append(el("strong", displayValue), el("small", metric.unit));
+    value.append(readingValue);
+    if (metric.secondary) value.append(el("span", metric.secondary, "indicator-secondary"));
+    top.append(title, value);
     if (metric.scoring)
       formula.append(
         el(
@@ -160,13 +167,7 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
         ),
       );
     const reading = el("p", metric.summary, "indicator-reading");
-    detail.replaceChildren(
-      title,
-      el("p", metric.definition, "indicator-definition"),
-      value,
-      reading,
-      formula,
-    );
+    detail.replaceChildren(top, reading, formula);
     if (metric.scoring)
       detail.append(
         renderScoreTrend(data.analysis.development.history, "", {
@@ -176,8 +177,11 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
         }),
       );
     const plot = chart(metric);
-    if (plot) detail.append(plot);
-    detail.append(detailTable(metric));
+    if (plot) {
+      const evidence = el("details", undefined, "indicator-evidence");
+      evidence.append(el("summary", "查看明细数据"), detailTable(metric));
+      detail.append(plot, evidence);
+    } else detail.append(detailTable(metric));
     const links = {
       trace: ["进入供应链追溯", () => actions.openTrace()],
       trade: ["查看采购结构", () => actions.navigate("trade")],
@@ -186,20 +190,36 @@ export function renderIndicatorWorkspace(root, data, view, actions, peerId) {
     if (links[metric.link]) {
       const [label, click] = links[metric.link];
       detail.append(button(label, click, "text-link indicator-next"));
+    } else if (view === "logistics" && metric.scoring) {
+      detail.append(button("查看关联改进", () => actions.navigate("gap-actions", metric.id), "text-link indicator-next"));
     }
   };
-  for (const metric of metrics) {
-    const tab = button("", () => show(metric.id), "indicator-selector-item");
-    tab.dataset.indicator = metric.id;
-    tab.append(
-      el("span", metric.name),
-      el("small", metric.scoring ? "计分指标" : "分析指标"),
-    );
-    nav.append(tab);
-    mobile.append(new Option(metric.name, metric.id));
+  for (const group of groups) {
+    if (!group.metrics.length) continue;
+    const list = el("div", undefined, "indicator-selector-group");
+    if (group.label) {
+      const caption = el("p", group.label, "indicator-group-label");
+      caption.id = detailId + (group.metrics === scoring ? "-scoring" : "-observed");
+      list.setAttribute("role", "group");
+      list.setAttribute("aria-labelledby", caption.id);
+      list.append(caption);
+    }
+    const options = group.label ? el("optgroup") : mobile;
+    if (group.label) {
+      options.label = group.label;
+      mobile.append(options);
+    }
+    for (const metric of group.metrics) {
+      const tab = button(metric.name, () => show(metric.id), "indicator-selector-item");
+      tab.dataset.indicator = metric.id;
+      tab.setAttribute("aria-controls", detailId);
+      list.append(tab);
+      options.append(new Option(metric.name, metric.id));
+    }
+    nav.append(list);
   }
   mobile.onchange = () => show(mobile.value);
   layout.append(nav, detail);
-  root.replaceChildren(heading, mobile, layout);
+  root.replaceChildren(heading, mobilePicker, layout);
   show(selected);
 }
