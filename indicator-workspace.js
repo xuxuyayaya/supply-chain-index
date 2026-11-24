@@ -1,5 +1,5 @@
 import { renderScoreTrend } from "./score-trend.js?v=20261124-chart-labels";
-import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
+import { el, number, priorityBadge, recordButton, recordHeading } from "./ui.js?v=20261124-task-priority";
 import { indicatorInputs } from "./record-schema.js?v=20261124-records";
 
 const labels = {
@@ -95,9 +95,15 @@ function detailTable(metric, period) {
   }
   head.append(header);
   const body = el("tbody");
+  const priorityColumn = metric.id === "improvement-tasks" ? metric.columns.indexOf("优先级") : -1;
   for (const row of metric.rows) {
     const tr = el("tr");
-    for (const text of row) tr.append(el("td", String(text)));
+    for (const [index, text] of row.entries()) {
+      const cell = el("td");
+      if (index === priorityColumn) cell.append(priorityBadge(text));
+      else cell.textContent = String(text);
+      tr.append(cell);
+    }
     body.append(tr);
   }
   if (!metric.rows.length) {

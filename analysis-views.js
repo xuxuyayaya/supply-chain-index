@@ -5,8 +5,8 @@ import {
   scorePoints,
 } from "./score-trend-model.js";
 import { renderResilience } from "./resilience-view.js?v=20261124-chart-labels";
-import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-chart-labels";
-import { el, number, recordButton, recordHeading } from "./ui.js?v=20261124-records";
+import { renderIndicatorWorkspace } from "./indicator-workspace.js?v=20261124-task-priority";
+import { el, number, priorityBadge, recordButton, recordHeading } from "./ui.js?v=20261124-task-priority";
 import { simulateDevelopment } from "./analysis-model.js";
 
 const byId = (id) => document.getElementById(id);
@@ -498,13 +498,6 @@ function renderComparison(data, actions) {
     button("定位问题并安排改进", () => actions.navigate("gap-actions"), "primary-button"),
     gapIndicators,
   );
-}
-
-const priorityTones = { 高: "high", 中: "medium", 低: "low" };
-function priorityBadge(priority, withLabel = false) {
-  const badge = el("span", priority ? priority + (withLabel ? "优先级" : "") : "—", "task-priority");
-  badge.dataset.level = priorityTones[priority] ?? "";
-  return badge;
 }
 
 const taskNumber = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 });
