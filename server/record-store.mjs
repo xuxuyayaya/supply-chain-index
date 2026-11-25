@@ -146,6 +146,7 @@ async function writeToDataBranch(path, sha, content, message) {
     const ssh = "ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" +
       " -o GlobalKnownHostsFile=/dev/null -o HostKeyAlgorithms=ssh-ed25519 -o ConnectTimeout=8" +
       " -o " + quoteForShell("UserKnownHostsFile=" + hosts) + " -i " + quoteForShell(key);
+    let lastProblem;
     for (const remote of writeRemotes) {
       try {
         await gitIn(repo, ["push", "--porcelain", remote, `${revision}:${branchRef}`], { GIT_SSH_COMMAND: ssh });
@@ -153,6 +154,7 @@ async function writeToDataBranch(path, sha, content, message) {
       } catch (error) {
         const problem = pushProblem(error);
         if (problem === "version-conflict") throw changedRecord();
+        lastProblem = problem;
         console.warn("Monthly record push failed:", new URL(remote).hostname, problem);
         if (problem === "key-not-accepted" || problem === "write-denied" || problem === "repository-access-denied") {
           const fingerprint = await execute("ssh-keygen", ["-lf", key], { timeout: 3000 })
@@ -162,6 +164,13 @@ async function writeToDataBranch(path, sha, content, message) {
         if (problem !== "connection") break;
       }
     }
+    const accessMessages = {
+      "key-not-accepted": "GitHub 尚未接受保存服务的部署密钥。请联系仓库管理员确认部署公钥已添加。",
+      "write-denied": "GitHub 未授予部署密钥写权限。请联系仓库管理员确认该密钥允许写入。",
+      "repository-access-denied": "GitHub 未允许部署密钥访问此仓库。请联系仓库管理员核对密钥所属仓库。",
+      "invalid-key": "保存服务的部署密钥格式无效。请联系服务管理员。",
+    };
+    if (accessMessages[lastProblem]) throw new RecordStoreError(503, accessMessages[lastProblem]);
     throw new RecordStoreError(502, "GitHub 暂未确认保存。可以重新打开录入窗口查看最新版本。");
   } finally {
     await rm(work, { recursive: true, force: true });
