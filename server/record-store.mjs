@@ -106,7 +106,9 @@ function pushProblem(error) {
   const output = (error.stderr ?? "") + "\n" + (error.stdout ?? "");
   if (/\[rejected\] \((?:fetch first|non-fast-forward)\)/.test(output)) return "version-conflict";
   if (/invalid format|error in libcrypto/i.test(output)) return "invalid-key";
-  if (/permission denied \(publickey\)|not have write access|marked as read only|repository not found/i.test(output)) return "access-denied";
+  if (/not have write access|marked as read only|write access to repository not granted/i.test(output)) return "write-denied";
+  if (/permission denied \(publickey\)/i.test(output)) return "key-not-accepted";
+  if (/repository not found/i.test(output)) return "repository-access-denied";
   if (/host key verification failed|remote host identification has changed/i.test(output)) return "host-key";
   if (error.killed || /connection (?:refused|closed|reset|timed out)|network is unreachable|could not resolve|kex_exchange_identification/i.test(output)) return "connection";
   if (/remote rejected|shallow update not allowed/i.test(output)) return "branch-rejected";
@@ -152,6 +154,11 @@ async function writeToDataBranch(path, sha, content, message) {
         const problem = pushProblem(error);
         if (problem === "version-conflict") throw changedRecord();
         console.warn("Monthly record push failed:", new URL(remote).hostname, problem);
+        if (problem === "key-not-accepted" || problem === "write-denied" || problem === "repository-access-denied") {
+          const fingerprint = await execute("ssh-keygen", ["-lf", key], { timeout: 3000 })
+            .then(({ stdout }) => stdout.match(/\bSHA256:[A-Za-z0-9+/]+/)?.[0], () => undefined);
+          if (fingerprint) console.warn("Monthly record deployment key fingerprint:", fingerprint);
+        }
         if (problem !== "connection") break;
       }
     }
