@@ -9,9 +9,10 @@ import { validateRecordGroup } from "./record-validation.mjs";
 export const repository = "xuxuyayaya/supply-chain-index";
 export const branch = "data";
 const remote = "https://github.com/" + repository + ".git";
-const writeRemote = "ssh://git@ssh.github.com:443/" + repository + ".git";
+const writeRemotes = ["ssh://git@ssh.github.com:443/", "ssh://git@github.com/"]
+  .map(host => host + repository + ".git");
 const branchRef = "refs/heads/" + branch;
-const githubHost = "[ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n";
+const githubHosts = "github.com,[ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl\n";
 const execute = promisify(execFile);
 const pathFor = (id, month) => "records/" + id + "/" + month + ".json";
 const limit = 512 * 1024;
@@ -101,6 +102,18 @@ export function recordWritesEnabled() {
 const quoteForShell = value => "'" + value.replaceAll("'", "'\\''") + "'";
 const changedRecord = () => new RecordStoreError(409, "本月记录已更新。请保留已录入的数据，重新打开录入窗口后合并。");
 
+function pushProblem(error) {
+  const output = (error.stderr ?? "") + "\n" + (error.stdout ?? "");
+  if (/\[rejected\] \((?:fetch first|non-fast-forward)\)/.test(output)) return "version-conflict";
+  if (/invalid format|error in libcrypto/i.test(output)) return "invalid-key";
+  if (/permission denied \(publickey\)|not have write access|marked as read only|repository not found/i.test(output)) return "access-denied";
+  if (/host key verification failed|remote host identification has changed/i.test(output)) return "host-key";
+  if (error.killed || /connection (?:refused|closed|reset|timed out)|network is unreachable|could not resolve|kex_exchange_identification/i.test(output)) return "connection";
+  if (/remote rejected|shallow update not allowed/i.test(output)) return "branch-rejected";
+  if (/cannot run ssh|cannot spawn ssh/i.test(output)) return "ssh-unavailable";
+  return "git-error";
+}
+
 async function writeToDataBranch(path, sha, content, message) {
   const work = await mkdtemp(join(tmpdir(), "supply-record-write-"));
   try {
@@ -111,7 +124,7 @@ async function writeToDataBranch(path, sha, content, message) {
     await Promise.all([
       execute("git", ["init", "--bare", "--quiet", repo], { timeout: 5000 }),
       writeFile(key, process.env.GITHUB_RECORDS_DEPLOY_KEY.trim() + "\n", { mode: 0o600 }),
-      writeFile(hosts, githubHost),
+      writeFile(hosts, githubHosts),
       writeFile(file, content),
     ]);
     const run = (...args) => gitIn(repo, args);
@@ -131,13 +144,18 @@ async function writeToDataBranch(path, sha, content, message) {
     const ssh = "ssh -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" +
       " -o GlobalKnownHostsFile=/dev/null -o HostKeyAlgorithms=ssh-ed25519 -o ConnectTimeout=8" +
       " -o " + quoteForShell("UserKnownHostsFile=" + hosts) + " -i " + quoteForShell(key);
-    try {
-      await gitIn(repo, ["push", "--porcelain", writeRemote, `${revision}:${branchRef}`], { GIT_SSH_COMMAND: ssh });
-    } catch (error) {
-      if (/\[rejected\] \((?:fetch first|non-fast-forward)\)/.test(error.stdout ?? "")) throw changedRecord();
-      throw new RecordStoreError(502, "GitHub 暂未确认保存。可以重新打开录入窗口查看最新版本。");
+    for (const remote of writeRemotes) {
+      try {
+        await gitIn(repo, ["push", "--porcelain", remote, `${revision}:${branchRef}`], { GIT_SSH_COMMAND: ssh });
+        return { blob, revision };
+      } catch (error) {
+        const problem = pushProblem(error);
+        if (problem === "version-conflict") throw changedRecord();
+        console.warn("Monthly record push failed:", new URL(remote).hostname, problem);
+        if (problem !== "connection") break;
+      }
     }
-    return { blob, revision };
+    throw new RecordStoreError(502, "GitHub 暂未确认保存。可以重新打开录入窗口查看最新版本。");
   } finally {
     await rm(work, { recursive: true, force: true });
   }
