@@ -1,1 +1,12 @@
-{"schema":1,"caseId":"jiaozuo-auto","period":"2026-10","updatedAt":"2026-11-24T06:03:44Z","groups":{"gap":{"addedValue":7.05,"tasks":[]}}}
+{
+  "schema": 1,
+  "caseId": "jiaozuo-auto",
+  "period": "2026-10",
+  "updatedAt": "2026-11-25T01:22:55.961Z",
+  "groups": {
+    "gap": {
+      "addedValue": 7.05,
+      "tasks": []
+    }
+  }
+}
