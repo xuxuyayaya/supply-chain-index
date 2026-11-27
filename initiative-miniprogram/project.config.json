@@ -1,0 +1,12 @@
+{
+  "description": "区域物流大数据平台互联互通倡议响应",
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "logistics-initiative",
+  "setting": {
+    "es6": true,
+    "minified": true,
+    "urlCheck": true
+  }
+}
