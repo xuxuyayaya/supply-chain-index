@@ -1,0 +1,32 @@
+<view class="page">
+  <view class="brand"><image wx:if="{{logoSrc}}" src="{{logoSrc}}" mode="widthFix" /><text wx:else>中国数联 China Unidata</text></view>
+  <scroll-view class="content" scroll-y bindscrolltolower="markRead" lower-threshold="35" scroll-into-view="{{scrollTarget}}" scroll-with-animation>
+    <view class="paper">
+      <view class="title">区域物流大数据平台\n互联互通倡议书</view>
+      <text class="paragraph" selectable>{{content.intro}}</text>
+      <block wx:for="{{content.sections}}" wx:key="title">
+        <view class="section-title">{{item.title}}</view><text class="paragraph" selectable>{{item.text}}</text>
+      </block>
+      <text class="paragraph" selectable>{{content.closing}}</text>
+      <view class="issuer">{{content.issuer}}\n{{content.date}}</view>
+      <view wx:if="{{!record}}" class="respond">
+        <view class="response-title">确认响应</view>
+        <view class="label">请选择所在单位</view>
+        <picker range="{{companies}}" value="{{companyIndex}}" bindchange="chooseCompany"><view class="select">{{selectedCompany || '请选择公司'}}<text>⌄</text></view></picker>
+        <input wx:if="{{selectedCompany === '其他'}}" class="other" value="{{otherCompany}}" bindinput="editOther" maxlength="100" placeholder="请输入单位全称" />
+        <view class="note">点击“确认响应”，即表示已阅读本倡议，并代表所在单位确认响应。</view>
+        <button class="primary" disabled="{{!hasRead || submitting}}" loading="{{submitting}}" bindtap="submit">{{submitting ? '正在提交…' : (hasRead ? '确认响应' : '阅读全文后确认响应')}}</button>
+      </view>
+      <view wx:else id="receipt" class="respond">
+        <view class="response-title confirmed">已确认响应</view><text class="company" selectable>{{record.company}}</text>
+        <view class="note">确认时间 {{confirmedTime}}</view><view class="note">感谢贵单位响应本倡议。</view>
+        <button class="primary" loading="{{generating}}" disabled="{{generating}}" bindtap="openPdf">打开并保存响应PDF</button>
+        <view class="note">PDF打开后，点击右上角菜单保存或转发。</view>
+        <button wx:if="{{canShare}}" class="secondary" disabled="{{generating}}" bindtap="sharePdf">转发PDF到微信</button>
+      </view>
+      <view wx:if="{{error}}" class="error" role="alert">{{error}}</view>
+    </view>
+    <view class="footer">{{content.issuer}}</view>
+  </scroll-view>
+  <canvas id="certificateCanvas" type="2d" class="pdf-canvas"></canvas>
+</view>
