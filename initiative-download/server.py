@@ -66,13 +66,20 @@ def create_pdf(company, confirmed_at=""):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.serve_file(head=True)
+
     def do_GET(self):
+        self.serve_file(head=False)
+
+    def serve_file(self, head=False):
         parsed = urlsplit(self.path)
         if parsed.path == "/health":
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
-            self.wfile.write(b"ok")
+            if not head:
+                self.wfile.write(b"ok")
             return
         if parsed.path != "/certificate.pdf":
             self.send_error(404)
@@ -91,16 +98,18 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             self.send_error(500, "Could not create PDF")
             return
+        disposition = "attachment" if params.get("mode", [""])[0] == "download" else "inline"
         filename = quote("倡议响应凭证-" + company + ".pdf", safe="")
         self.send_response(200)
         self.send_header("Content-Type", "application/pdf")
         self.send_header("Content-Disposition",
-                         "attachment; filename=initiative-response.pdf; filename*=UTF-8''" + filename)
+                         disposition + "; filename=initiative-response.pdf; filename*=UTF-8''" + filename)
         self.send_header("Content-Length", str(len(pdf)))
         self.send_header("Cache-Control", "private, no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
-        self.wfile.write(pdf)
+        if not head:
+            self.wfile.write(pdf)
 
     def log_message(self, format, *args):
         pass  # Do not log company names embedded in download URLs.
