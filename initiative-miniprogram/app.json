@@ -1,0 +1,13 @@
+{
+  "pages": [
+    "pages/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "物流数据互联互通倡议",
+    "navigationBarBackgroundColor": "#991d28",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f6f8"
+  },
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}
